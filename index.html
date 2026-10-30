@@ -1165,6 +1165,11 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('appScreen').classList.remove('hidden');
 
+            // Tải cấu hình Gemini AI riêng theo tài khoản đang đăng nhập
+            if (window.loadAccountAiConfig) {
+                window.loadAccountAiConfig(authUser);
+            }
+
             // Bắt đầu kết nối Local Agent
             window.startAgentPolling();
         };
@@ -1565,15 +1570,12 @@
             pollTimer = setInterval(window.pollAgentStatus, 1200);
         };
 
-        let localAiConfig = JSON.parse(localStorage.getItem('qlvb_ai_config') || 'null') || {
+        let localAiConfig = {
             api_key: '',
             model: 'gemini-3.8-flash',
             mode: 'full',
             verified: false
         };
-        if (!localAiConfig.model || !localAiConfig.model.startsWith('gemini-')) {
-            localAiConfig.model = 'gemini-3.8-flash';
-        }
         let aiSyncedToAgentOnce = false;
 
         function ensureValidSelectModel(val) {
@@ -1584,6 +1586,64 @@
             sel.value = finalVal;
             return finalVal;
         }
+
+        window.loadAccountAiConfig = function(authUser) {
+            aiSyncedToAgentOnce = false;
+            const uid = authUser ? authUser.id : (currentUser ? currentUser.id : '');
+            const cloudCfg = authUser?.user_metadata?.qlvb_ai_config || null;
+            const localScoped = uid ? JSON.parse(localStorage.getItem('qlvb_ai_config_' + uid) || 'null') : null;
+            const legacyLocal = JSON.parse(localStorage.getItem('qlvb_ai_config') || 'null');
+
+            const chosen = (cloudCfg && cloudCfg.api_key)
+                ? cloudCfg
+                : ((localScoped && localScoped.api_key) ? localScoped : (legacyLocal && legacyLocal.api_key ? legacyLocal : null));
+
+            if (chosen && chosen.api_key) {
+                localAiConfig = {
+                    api_key: chosen.api_key,
+                    model: (chosen.model && chosen.model.startsWith('gemini-')) ? chosen.model : 'gemini-3.8-flash',
+                    mode: chosen.mode || 'full',
+                    verified: chosen.verified !== false
+                };
+                if (uid) {
+                    localStorage.setItem('qlvb_ai_config_' + uid, JSON.stringify(localAiConfig));
+                }
+                // Nếu mới có ở trình duyệt mà chưa đồng bộ lên tài khoản Supabase thì tự động lưu lên tài khoản
+                if (!cloudCfg || !cloudCfg.api_key) {
+                    window.persistAccountAiConfig(localAiConfig);
+                }
+            } else {
+                localAiConfig = {
+                    api_key: '',
+                    model: 'gemini-3.8-flash',
+                    mode: 'full',
+                    verified: false
+                };
+            }
+
+            const inpKey = document.getElementById('txtModalApiKey');
+            if (inpKey) inpKey.value = localAiConfig.api_key || '';
+            ensureValidSelectModel(localAiConfig.model);
+            const cboMode = document.getElementById('cboModalAiMode');
+            if (cboMode) cboMode.value = localAiConfig.mode || 'full';
+
+            window.updateAiBadgeFromLocal();
+        };
+
+        window.persistAccountAiConfig = async function(cfg) {
+            const uid = currentUser ? currentUser.id : '';
+            if (uid) {
+                localStorage.setItem('qlvb_ai_config_' + uid, JSON.stringify(cfg));
+            }
+            localStorage.setItem('qlvb_ai_config', JSON.stringify(cfg));
+            if (supabaseClient && currentUser) {
+                try {
+                    await supabaseClient.auth.updateUser({
+                        data: { qlvb_ai_config: cfg }
+                    });
+                } catch (e) {}
+            }
+        };
 
         window.updateAiBadgeFromLocal = function() {
             const badgeAi = document.getElementById('badgeTopAi');
@@ -1603,7 +1663,7 @@
 
         window.openAiConfigModal = function() {
             document.getElementById('boxAiTestResult').classList.add('hidden');
-            if (!document.getElementById('txtModalApiKey').value && localAiConfig.api_key) {
+            if (localAiConfig.api_key) {
                 document.getElementById('txtModalApiKey').value = localAiConfig.api_key;
             }
             ensureValidSelectModel(localAiConfig.model || 'gemini-3.8-flash');
@@ -1639,7 +1699,7 @@
                     throw new Error(`API Key không hợp lệ hoặc bị từ chối (HTTP ${r.status}).`);
                 }
                 localAiConfig = { api_key: key, model: model, mode: mode, verified: true };
-                localStorage.setItem('qlvb_ai_config', JSON.stringify(localAiConfig));
+                await window.persistAccountAiConfig(localAiConfig);
                 window.updateAiBadgeFromLocal();
 
                 if (agentOnline) {
@@ -1647,11 +1707,11 @@
                 }
 
                 boxRes.className = 'p-3 rounded-xl text-xs border bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold';
-                boxRes.innerText = `✅ Kết nối Gemini AI thành công! (Mô hình: ${model})`;
+                boxRes.innerText = `✅ Kết nối Gemini AI thành công! (Đã lưu theo tài khoản — Mô hình: ${model})`;
                 boxRes.classList.remove('hidden');
             } catch (err) {
                 localAiConfig.verified = false;
-                localStorage.setItem('qlvb_ai_config', JSON.stringify(localAiConfig));
+                await window.persistAccountAiConfig(localAiConfig);
                 window.updateAiBadgeFromLocal();
                 boxRes.className = 'p-3 rounded-xl text-xs border bg-red-50 text-red-700 border-red-300 font-semibold';
                 boxRes.innerText = `❌ Lỗi kết nối: ${err.message}`;
@@ -1677,7 +1737,7 @@
 
             if (mode === 'off') {
                 localAiConfig = { api_key: key, model: model, mode: 'off', verified: false };
-                localStorage.setItem('qlvb_ai_config', JSON.stringify(localAiConfig));
+                await window.persistAccountAiConfig(localAiConfig);
                 if (agentOnline) {
                     await callAgentApi('/api/settings/save', 'POST', { api_key: key, model: model, mode: 'off' }).catch(() => {});
                 }
@@ -1702,7 +1762,7 @@
             }
 
             localAiConfig = { api_key: key, model: model, mode: mode, verified: true };
-            localStorage.setItem('qlvb_ai_config', JSON.stringify(localAiConfig));
+            await window.persistAccountAiConfig(localAiConfig);
             window.updateAiBadgeFromLocal();
 
             if (agentOnline) {
@@ -1710,7 +1770,7 @@
                 aiSyncedToAgentOnce = true;
             }
 
-            window.toast.fire({ icon: 'success', title: 'Đã lưu & kết nối Gemini AI thành công!' });
+            window.toast.fire({ icon: 'success', title: 'Đã lưu API Key theo tài khoản & kết nối Gemini AI!' });
             window.closeAiConfigModal();
         };
 
@@ -1729,7 +1789,7 @@
                 dotAgent.className = 'w-2 h-2 rounded-full bg-emerald-400';
                 txtAgent.innerText = 'Local: Đã kết nối';
 
-                // Đồng bộ thư mục lưu trữ & cấu hình AI lần đầu
+                // Đồng bộ thư mục lưu trữ lần đầu
                 if (!settingsLoadedOnce && data.settings) {
                     settingsLoadedOnce = true;
                     const s = data.settings;
@@ -1740,25 +1800,13 @@
                     if (s.excel_path) {
                         document.getElementById('txtBatchExcelPath').value = s.excel_path;
                     }
-                    if (s.api_key && !s.api_key.startsWith('AQ.Ab8RN6')) {
-                        document.getElementById('txtModalApiKey').value = s.api_key;
-                        localAiConfig.api_key = s.api_key;
-                        localAiConfig.verified = true;
-                        localStorage.setItem('qlvb_ai_config', JSON.stringify(localAiConfig));
-                    }
-                    if (s.model && s.model.startsWith('gemini-')) {
-                        ensureValidSelectModel(s.model);
-                    }
-                    if (s.mode) {
-                        document.getElementById('cboModalAiMode').value = s.mode;
-                    }
                 }
 
-                // Tự động đồng bộ API Key người dùng đã lưu xuống Local Agent khi kết nối
-                if (!aiSyncedToAgentOnce && localAiConfig.api_key && localAiConfig.verified) {
+                // Tự động đồng bộ API Key của tài khoản đang đăng nhập xuống Local Agent
+                if (!aiSyncedToAgentOnce) {
                     aiSyncedToAgentOnce = true;
                     callAgentApi('/api/settings/save', 'POST', {
-                        api_key: localAiConfig.api_key,
+                        api_key: (localAiConfig.api_key && localAiConfig.verified) ? localAiConfig.api_key : '',
                         model: localAiConfig.model || 'gemini-3.8-flash',
                         mode: localAiConfig.mode || 'full'
                     }).catch(() => {});
