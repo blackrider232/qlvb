@@ -47,22 +47,11 @@
     <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (CHUẨN /QUANLYDAUTHAU - CHỈ CẦN ADMIN DUYỆT) -->
     <!-- ========================================================================= -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4 py-8 transition-colors">
-        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600 relative">
-            <!-- Nút cấu hình SQL & Local Agent ở góc phải trên -->
-            <div class="absolute top-3 right-3 flex items-center gap-1.5">
-                <button type="button" onclick="window.openSupabaseSetupModal()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-600 transition" title="Cấu hình bảng dữ liệu qlvb_profiles trên Supabase">
-                    <i class="fas fa-database mr-1 text-blue-600 dark:text-blue-400"></i>Cấu hình DB
-                </button>
-            </div>
-
-            <div class="text-center mb-6 mt-2">
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-sm border-t-4 border-blue-600 relative">
+            <div class="text-center mb-6">
                 <img src="logo-192.png" alt="Logo SCE" class="h-16 w-auto mx-auto mb-3 object-contain" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Emblem_of_Vietnam.svg/120px-Emblem_of_Vietnam.svg.png';">
                 <h2 class="text-lg sm:text-xl font-black text-blue-900 dark:text-blue-400 uppercase tracking-tight">HỆ THỐNG TRA CỨU & TẢI VĂN BẢN</h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Trung tâm Xúc tiến Đầu tư và Hỗ trợ Doanh nghiệp Hà Nội (SCE)</p>
-                <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
-                    <i class="fas fa-hdd"></i>
-                    <span>Web App Điều Khiển • Lưu Dữ Liệu Local 100%</span>
-                </div>
             </div>
 
             <div id="loginError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/40 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-lg text-center font-medium leading-relaxed"></div>
@@ -71,7 +60,7 @@
             <!-- FORM ĐĂNG NHẬP -->
             <div id="authFormLogin" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email tài khoản</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email đăng nhập</label>
                     <input type="email" id="loginUser" autocomplete="email" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-slate-200" placeholder="Nhập email của bạn...">
                 </div>
                 <div>
@@ -89,13 +78,18 @@
 
                 <!-- Khung nhập mã 2FA (TOTP) nếu tài khoản có bật 2FA -->
                 <div id="mfaVerifyBox" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl space-y-2">
-                    <label class="block text-xs font-bold text-amber-800 dark:text-amber-300">Mã xác thực 2 lớp (6 số Google Authenticator)</label>
+                    <label class="block text-xs font-bold text-amber-800 dark:text-amber-300">Mã xác thực 2 lớp (6 số)</label>
                     <input type="text" id="loginMfaCode" maxlength="6" inputmode="numeric" class="w-full border border-amber-400 bg-white dark:bg-slate-800 rounded-lg p-2 text-center text-lg font-mono tracking-widest font-bold outline-none dark:text-white" placeholder="000000" onkeypress="if(event.key === 'Enter') window.verifyMfaAndProceed()">
                     <button type="button" onclick="window.verifyMfaAndProceed()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-xs shadow transition">Xác nhận mã 2FA</button>
                 </div>
 
+                <div class="flex items-center">
+                    <input type="checkbox" id="rememberMe" checked class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer">
+                    <label for="rememberMe" class="ml-2 block text-xs text-slate-600 dark:text-slate-400 cursor-pointer">Ghi nhớ đăng nhập</label>
+                </div>
+
                 <button onclick="window.handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
-                    <i class="fas fa-sign-in-alt mr-1.5"></i>Đăng nhập hệ thống
+                    Đăng nhập
                 </button>
 
                 <div class="relative flex py-1 items-center">
@@ -115,17 +109,17 @@
                 </button>
 
                 <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
-                    Chưa có tài khoản? <button type="button" onclick="window.switchAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Đăng ký tài khoản mới</button>
+                    Chưa có tài khoản? <button type="button" onclick="window.switchAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Đăng ký tài khoản</button>
                 </div>
             </div>
 
-            <!-- FORM ĐĂNG KÝ TÀI KHOẢN (KHÔNG CẦN PHÂN QUYỀN PHÒNG BAN, CHỜ ADMIN DUYỆT) -->
+            <!-- FORM ĐĂNG KÝ TÀI KHOẢN -->
             <div id="authFormRegister" class="hidden space-y-3.5">
                 <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300">
                     <i class="fas fa-shield-halved mr-1"></i> Tài khoản đăng ký mới sẽ ở trạng thái <b>Chờ Admin phê duyệt</b>. Ngay khi Admin duyệt, bạn có thể sử dụng toàn bộ tính năng.
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Họ và tên cán bộ</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Họ và tên</label>
                     <input type="text" id="regFullname" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="VD: Nguyễn Văn A">
                 </div>
                 <div>
@@ -136,12 +130,20 @@
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mật khẩu (tối thiểu 6 ký tự)</label>
                     <input type="password" id="regPassword" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="••••••••" onkeypress="if(event.key === 'Enter') window.handleRegisterAuth()">
                 </div>
-                <button onclick="window.handleRegisterAuth()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
-                    <i class="fas fa-user-plus mr-1.5"></i>Gửi đăng ký tài khoản
+                <button onclick="window.handleRegisterAuth()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
+                    Đăng ký
                 </button>
                 <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
                     Đã có tài khoản? <button type="button" onclick="window.switchAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Quay lại Đăng nhập</button>
                 </div>
+            </div>
+
+            <!-- Nút Tải & Hướng dẫn chạy QLVB Agent (.exe) cho máy tính -->
+            <div class="mt-3 pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-700 text-center">
+                <button type="button" onclick="window.openAgentHelpModal()" class="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-semibold transition shadow-sm">
+                    <i class="fas fa-download text-blue-600 dark:text-blue-400"></i>
+                    <span>Tải & Hướng dẫn chạy QLVB Agent (.exe)</span>
+                </button>
             </div>
         </div>
     </div>
@@ -168,23 +170,24 @@
                     </div>
                 </div>
 
-                <!-- GÓC PHẢI: TRẠNG THÁI LOCAL AGENT, QLVB BROWSER, AI, DUYỆT TÀI KHOẢN & USER -->
+                <!-- GÓC PHẢI: TRẠNG THÁI LOCAL AGENT, QLVB BROWSER, HƯỚNG DẪN AGENT, DUYỆT TÀI KHOẢN & USER -->
                 <div class="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto">
                     <!-- 1. Trạng thái kết nối Local Agent trên máy tính -->
-                    <button onclick="window.openAgentHelpModal()" id="badgeLocalAgent" class="px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-amber-500/20 text-amber-200 border border-amber-400/40 hover:bg-amber-500/30 transition" title="Trạng thái kết nối công cụ lưu file Local trên máy tính">
+                    <button onclick="window.openAgentHelpModal()" id="badgeLocalAgent" class="px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-amber-500/20 text-amber-200 border border-amber-400/40 hover:bg-amber-500/30 transition" title="Bấm để tải và xem hướng dẫn chạy QLVB Agent (.exe)">
                         <span id="dotLocalAgent" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
                         <span id="txtLocalAgent">Máy trạm: Đang kiểm tra...</span>
                     </button>
 
-                    <!-- 2. Nút Mở / Ẩn Hiện Trình duyệt QLVB -->
+                    <!-- 2. Nút Tải & Hướng dẫn chạy Agent (.exe) -->
+                    <button onclick="window.switchTab('guide')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/90 hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5" title="Tải file QLVB_Web_Agent.exe và xem hướng dẫn chạy">
+                        <i class="fas fa-download"></i>
+                        <span>Tải Agent (.exe)</span>
+                    </button>
+
+                    <!-- 3. Nút Mở / Ẩn Hiện Trình duyệt QLVB -->
                     <button onclick="window.triggerOpenBrowser()" id="btnTopBrowser" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5">
                         <i class="fas fa-globe"></i>
                         <span id="txtTopBrowser">Mở QLVB (Đăng nhập)</span>
-                    </button>
-
-                    <!-- 3. Huy hiệu AI Gemini -->
-                    <button onclick="window.switchTab('settings')" id="badgeTopAi" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-blue-100 border border-white/15 transition">
-                        🤖 AI: Đang kiểm tra...
                     </button>
 
                     <!-- 4. Nút mở Bảng Nhật Ký (Log) -->
@@ -226,12 +229,15 @@
                 <div class="flex items-center gap-2">
                     <i class="fas fa-triangle-exclamation text-amber-600 dark:text-amber-400 text-base"></i>
                     <span>
-                        <b>Chưa kết nối với Local Agent trên máy tính:</b> Để điều khiển trình duyệt QLVB và lưu hồ sơ trực tiếp vào ổ cứng máy tính này, hãy chạy file <b><code class="px-1.5 py-0.5 bg-amber-200/70 dark:bg-amber-900 rounded">Chay_QLVB_Web_Agent.bat</code></b> trên máy.
+                        <b>Chưa kết nối với QLVB Agent trên máy tính:</b> Để điều khiển trình duyệt QLVB và lưu hồ sơ trực tiếp vào ổ cứng máy tính này, vui lòng tải và mở file <b><code class="px-1.5 py-0.5 bg-amber-200/70 dark:bg-amber-900 rounded">QLVB_Web_Agent.exe</code></b> trên máy.
                     </span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <button onclick="window.openAgentHelpModal()" class="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition">
-                        <i class="fas fa-plug mr-1"></i>Cấu hình / Hướng dẫn bật Agent
+                    <a href="https://github.com/blackrider232/qlvb/releases/latest/download/QLVB_Web_Agent.exe" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition inline-flex items-center gap-1 shadow-sm">
+                        <i class="fas fa-download"></i>Tải QLVB_Web_Agent.exe
+                    </a>
+                    <button onclick="window.switchTab('guide')" class="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition inline-flex items-center gap-1">
+                        <i class="fas fa-circle-question"></i>Hướng dẫn chạy Agent
                     </button>
                 </div>
             </div>
@@ -249,8 +255,8 @@
                 <button onclick="window.switchTab('history')" id="tabBtn_history" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <span>📚 Kho văn bản & Lịch sử</span>
                 </button>
-                <button onclick="window.switchTab('settings')" id="tabBtn_settings" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                    <span>⚙️ Cài đặt & Cấu hình</span>
+                <button onclick="window.switchTab('guide')" id="tabBtn_guide" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <span>📥 Tải & Hướng dẫn chạy Agent</span>
                 </button>
             </div>
         </div>
@@ -440,7 +446,7 @@
             <section id="tabPage_batch" class="hidden space-y-3.5 flex-1 flex flex-col">
                 <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
                     <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
-                        📂 Cấu hình nguồn danh mục dự án Excel & Thư mục lưu trữ Local
+                        📂 Danh mục dự án Excel & Thư mục lưu trữ trên máy tính
                     </h3>
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
@@ -617,88 +623,120 @@
             </section>
 
             <!-- ================================================================= -->
-            <!-- TAB 4: CÀI ĐẶT & CẤU HÌNH                                         -->
+            <!-- TAB 4: TẢI & HƯỚNG DẪN CHẠY QLVB AGENT (.EXE)                     -->
             <!-- ================================================================= -->
-            <section id="tabPage_settings" class="hidden space-y-3.5 flex-1">
-                <!-- Cấu hình Gemini AI -->
-                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
-                        🤖 Cấu hình Trí tuệ Nhân tạo Gemini AI (Tóm tắt cốt lõi)
-                    </h3>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Gemini API Key:</label>
-                        <div class="lg:col-span-6 relative">
-                            <input type="password" id="txtSetApiKey" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 pr-9 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="AIzaSy...">
-                            <button type="button" onclick="const el=document.getElementById('txtSetApiKey'); el.type=el.type==='password'?'text':'password';" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">
-                                <i class="far fa-eye"></i>
-                            </button>
+            <section id="tabPage_guide" class="hidden space-y-4 flex-1">
+                <!-- Khối 1: Khu vực Tải xuống QLVB_Web_Agent.exe & Trạng thái kết nối trực tiếp -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="space-y-1.5">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[11px] font-extrabold uppercase">
+                                <i class="fas fa-desktop"></i> Công cụ kết nối máy tính (Windows Portable .EXE)
+                            </div>
+                            <h2 class="text-base sm:text-lg font-extrabold text-blue-900 dark:text-blue-300 uppercase">
+                                📥 Tải công cụ QLVB Local Agent (`QLVB_Web_Agent.exe`)
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+                                Để giao diện Web App có thể tự động điều khiển trình duyệt tra cứu QLVB và <b>lưu toàn bộ văn bản PDF, phụ lục đính kèm, báo cáo Excel trực tiếp vào ổ cứng máy tính của bạn</b>, bạn chỉ cần tải và chạy file <b><code>QLVB_Web_Agent.exe</code></b> dưới đây.
+                            </p>
                         </div>
-                        <div class="lg:col-span-4 flex flex-wrap gap-2">
-                            <button onclick="window.testGeminiConnection()" id="btnTestGemini" class="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition">
-                                ⚡ Kiểm tra kết nối API
-                            </button>
-                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
-                                🌐 Lấy Key miễn phí
+
+                        <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+                            <a href="https://github.com/blackrider232/qlvb/releases/latest/download/QLVB_Web_Agent.exe" class="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2.5">
+                                <i class="fas fa-download text-base"></i>
+                                <span>TẢI XUỐNG QLVB_Web_Agent.exe</span>
                             </a>
+                            <div class="flex items-center gap-2">
+                                <a href="https://raw.githubusercontent.com/blackrider232/qlvb/main/danh_sach_du_an_mau.xlsx" download="danh_sach_du_an_mau.xlsx" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition text-center">
+                                    📊 Tải file Excel mẫu
+                                </a>
+                                <button onclick="window.manualCheckAgent()" class="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition">
+                                    🔄 Kiểm tra kết nối
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Mô hình Gemini:</label>
-                        <div class="lg:col-span-4">
-                            <select id="cboSetModel" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
-                                <option value="gemini-3.8-flash">gemini-3.8-flash (Khuyên dùng)</option>
-                                <option value="gemini-3.8-flash-lite">gemini-3.8-flash-lite</option>
-                                <option value="gemini-3.8-pro">gemini-3.8-pro</option>
-                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                                <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                            </select>
+                    <!-- Thanh trạng thái kết nối trực tiếp tại Tab Hướng dẫn -->
+                    <div id="guideStatusBox" class="mt-4 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2.5">
+                            <span id="guideStatusDot" class="w-3 h-3 rounded-full bg-amber-500 animate-ping"></span>
+                            <span id="guideStatusText" class="font-bold text-amber-900 dark:text-amber-200">
+                                Trạng thái hiện tại: Chưa phát hiện QLVB_Web_Agent.exe đang chạy trên máy tính này.
+                            </span>
                         </div>
-                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Chế độ phân tích:</label>
-                        <div class="lg:col-span-4">
-                            <select id="cboSetAiMode" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
-                                <option value="full">Đầy đủ (Đọc trích yếu + trang đầu PDF scan)</option>
-                                <option value="metadata_only">Chỉ trích yếu (Tiết kiệm Token)</option>
-                                <option value="off">Tắt AI (Dùng bộ quy tắc offline)</option>
-                            </select>
+                        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400">Cổng kết nối mặc định: 127.0.0.1:8765</span>
+                    </div>
+                </div>
+
+                <!-- Khối 2: Hướng dẫn 3 bước chạy Agent trực quan -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h3 class="text-xs sm:text-sm font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        🚀 Hướng dẫn 3 bước khởi chạy QLVB Agent trên máy tính (Không cần cài đặt)
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Bước 1 -->
+                        <div class="rounded-xl p-4 bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 rounded-md bg-blue-700 text-white text-[11px] font-extrabold">BƯỚC 1</span>
+                                <i class="fas fa-file-arrow-down text-blue-600 dark:text-blue-400 text-lg"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">1. Tải file `QLVB_Web_Agent.exe` về máy</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Bấm nút <b class="text-emerald-600 dark:text-emerald-400">[Tải xuống QLVB_Web_Agent.exe]</b> ở trên và lưu vào máy tính bạn muốn dùng để chứa hồ sơ văn bản (ví dụ: để ngoài <code>Desktop</code> hoặc thư mục <code>D:\QLVB</code>).
+                            </p>
+                            <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[11px] text-blue-800 dark:text-blue-200">
+                                💡 <b>Chạy ngay 100%:</b> File <code>.exe</code> đã đóng gói trọn bộ công cụ tự động hóa và AI, không cần cài Python.
+                            </div>
+                        </div>
+
+                        <!-- Bước 2 -->
+                        <div class="rounded-xl p-4 bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 rounded-md bg-blue-700 text-white text-[11px] font-extrabold">BƯỚC 2</span>
+                                <i class="fas fa-computer-mouse text-indigo-600 dark:text-indigo-400 text-lg"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">2. Nháy đúp mở `QLVB_Web_Agent.exe`</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Nháy đúp chuột vào file <b><code>QLVB_Web_Agent.exe</code></b> vừa tải về. Một bảng điều khiển nhỏ gọn sẽ hiện lên báo trạng thái <b class="text-emerald-600">🟢 ĐANG HOẠT ĐỘNG (Cổng 8765)</b>.
+                            </p>
+                            <div class="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-[11px] text-amber-800 dark:text-amber-200">
+                                ⚠️ <b>Lưu ý:</b> Nếu Windows hiện thông báo xanh <i>"Windows protected your PC"</i>, hãy bấm vào chữ <b>More info</b> &rarr; chọn <b>Run anyway</b>.
+                            </div>
+                        </div>
+
+                        <!-- Bước 3 -->
+                        <div class="rounded-xl p-4 bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white text-[11px] font-extrabold">BƯỚC 3</span>
+                                <i class="fas fa-circle-check text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">3. Tra cứu & Tải văn bản trên Web App</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Ngay khi Agent được bật, góc trên bên phải trang web sẽ tự động báo <b class="text-emerald-600">🟢 Máy trạm Local: Đã kết nối</b>. Bạn có thể chuyển sang Tab <b>Tra cứu nhanh</b> hoặc <b>Quét theo Dự án</b> để tải văn bản ngay!
+                            </p>
+                            <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-[11px] text-emerald-800 dark:text-emerald-200">
+                                📂 <b>Lưu trữ Local:</b> Toàn bộ file tải về nằm trong thư mục <code>downloads</code> cạnh file <code>.exe</code> (hoặc thư mục bất kỳ bạn chọn).
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Cấu hình Trình duyệt & Quy tắc lọc -->
-                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
-                        🌐 Cấu hình Trình duyệt Tự động hóa Playwright & Quy tắc lọc
+                <!-- Khối 3: Các câu hỏi thường gặp -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs sm:text-sm font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        💡 Lưu ý quan trọng trong quá trình sử dụng
                     </h3>
-
-                    <div class="flex flex-wrap items-center gap-6 text-xs sm:text-sm">
-                        <span class="font-bold text-slate-700 dark:text-slate-300">Kênh trình duyệt:</span>
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="radBrowserChannel" value="chrome" checked class="text-blue-600">
-                            <span>Google Chrome (Khuyên dùng)</span>
-                        </label>
-                        <label class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="radBrowserChannel" value="msedge" class="text-blue-600">
-                            <span>Microsoft Edge</span>
-                        </label>
-                    </div>
-
-                    <div class="pt-1">
-                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            <input type="checkbox" id="chkSetRequireDate" checked class="w-4 h-4 text-blue-600 rounded">
-                            <span>Chỉ tải các văn bản chính thức đã có đủ Số ký hiệu và Ngày tháng (Tự động bỏ qua dự thảo chưa ban hành)</span>
-                        </label>
-                    </div>
-
-                    <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-700">
-                        <button onclick="window.syncDocTypesFromWeb()" class="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
-                            🔄 Quét & Đồng bộ tất cả Loại văn bản từ trang Tra cứu Web
-                        </button>
-                        <button onclick="window.saveAllSettings()" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow transition">
-                            💾 Lưu và Áp dụng Cấu hình
-                        </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300">
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <b class="text-slate-800 dark:text-slate-100 block mb-1">1. Giữ cửa sổ QLVB Local Agent hoạt động khi đang tải:</b>
+                            Trong lúc tra cứu và tải văn bản, hãy giữ cửa sổ nhỏ <b>QLVB Local Agent</b> đang mở (có thể thu nhỏ xuống thanh Taskbar). Khi làm việc xong, bấm nút <b>[✖ Tắt Agent]</b> trên cửa sổ đó để đóng.
+                        </div>
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <b class="text-slate-800 dark:text-slate-100 block mb-1">2. Yêu cầu trình duyệt trên máy tính:</b>
+                            Máy tính chạy Agent chỉ cần có sẵn trình duyệt <b>Google Chrome</b> hoặc <b>Microsoft Edge</b> thông thường. Khi bấm <i>"Bước 1: Mở QLVB & Đăng nhập"</i>, cửa sổ Pop-up sẽ hiện lên để bạn đăng nhập tài khoản QLVB Hà Nội rồi tự động ẩn xuống chạy ngầm.
+                        </div>
                     </div>
                 </div>
             </section>
@@ -811,76 +849,44 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- MODAL 3: CẤU HÌNH SUPABASE & KỊCH BẢN SQL BẢNG ĐỘC LẬP `qlvb_profiles`     -->
-    <!-- ========================================================================= -->
-    <div id="supabaseSetupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div class="bg-blue-900 text-white px-5 py-3.5 flex items-center justify-between">
-                <h3 class="text-sm sm:text-base font-extrabold uppercase">🗄️ Cấu hình Supabase & Bảng Độc lập `qlvb_profiles`</h3>
-                <button onclick="document.getElementById('supabaseSetupModal').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-red-600 text-white flex items-center justify-center">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
-                <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
-                    <b>Hướng dẫn khởi tạo bảng lần đầu (Chỉ mất 30 giây):</b><br>
-                    1. Hệ thống đang dùng chung Project Supabase với <code>/quanlydauthau</code> nhưng lưu ở bảng riêng biệt hoàn toàn là <b><code>public.qlvb_profiles</code></b>.<br>
-                    2. Bấm nút <b>[📋 Copy toàn bộ SQL `qlvb_profiles`]</b> bên dưới &rarr; Mở <b>Supabase SQL Editor</b> &rarr; Dán và bấm <b>Run</b>.<br>
-                    3. Kịch bản SQL sẽ tự động đồng bộ luôn tài khoản Admin từ <code>sce_v2_profiles</code> sang <code>qlvb_profiles</code> để bạn đăng nhập được ngay!
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Supabase Project URL:</label>
-                        <input type="text" id="cfgSupabaseUrl" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Supabase Anon Key:</label>
-                        <input type="text" id="cfgSupabaseKey" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs font-mono">
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-xs font-bold">Kịch bản SQL khởi tạo bảng độc lập `public.qlvb_profiles`:</label>
-                        <button onclick="window.copyQlvbSqlSchema()" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow">
-                            📋 Copy toàn bộ SQL `qlvb_profiles`
-                        </button>
-                    </div>
-                    <textarea id="qlvbSqlPreviewTextarea" readonly class="w-full h-48 border border-slate-300 dark:border-slate-700 bg-slate-950 text-emerald-300 font-mono text-[11px] p-3 rounded-xl outline-none"></textarea>
-                </div>
-                <div class="flex justify-end gap-2 pt-2 border-t dark:border-slate-700">
-                    <button onclick="window.resetDefaultSupabaseConfig()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-semibold">Khôi phục mặc định</button>
-                    <button onclick="window.saveSupabaseConfig()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">Lưu cấu hình</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ========================================================================= -->
-    <!-- MODAL 4: HƯỚNG DẪN & CẤU HÌNH LOCAL AGENT BRIDGE                          -->
+    <!-- MODAL 3: TẢI & HƯỚNG DẪN CHẠY QLVB LOCAL AGENT (.EXE)                     -->
     <!-- ========================================================================= -->
     <div id="agentHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-700">
             <div class="bg-blue-900 text-white px-5 py-3.5 flex items-center justify-between">
-                <h3 class="text-sm sm:text-base font-extrabold uppercase">🔌 Kết nối Máy trạm Local (QLVB Local Agent)</h3>
+                <h3 class="text-sm sm:text-base font-extrabold uppercase">📥 Tải & Hướng dẫn chạy QLVB Agent (.exe)</h3>
                 <button onclick="document.getElementById('agentHelpModal').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-red-600 text-white flex items-center justify-center">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="p-5 space-y-4 text-xs sm:text-sm">
+                <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                        <div class="font-extrabold text-emerald-900 dark:text-emerald-300 text-sm">Công cụ QLVB Local Agent (Windows)</div>
+                        <div class="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">Bản chạy độc lập <code>.exe</code> — Không cần cài đặt Python</div>
+                    </div>
+                    <a href="https://github.com/blackrider232/qlvb/releases/latest/download/QLVB_Web_Agent.exe" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0">
+                        <i class="fas fa-download"></i>
+                        <span>Tải QLVB_Web_Agent.exe</span>
+                    </a>
+                </div>
+
                 <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2 leading-relaxed">
-                    <p class="font-bold text-blue-900 dark:text-blue-300">Làm thế nào để Web App lưu dữ liệu trực tiếp trên máy tính được chọn?</p>
+                    <p class="font-bold text-blue-900 dark:text-blue-300">Hướng dẫn 3 bước kết nối máy tính lưu văn bản:</p>
                     <ol class="list-decimal pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                        <li>Trên chiếc máy tính bạn muốn dùng để tải và lưu trữ hồ sơ văn bản, hãy mở thư mục phần mềm <b>QLVB</b>.</li>
-                        <li>Nháy đúp chạy file <b><code>Chay_QLVB_Web_Agent.bat</code></b> (hoặc lệnh <code>python qlvb_tool/web_agent.py</code>).</li>
-                        <li>Ngay lập tức, biểu tượng trên thanh Header sẽ chuyển sang <b class="text-emerald-600">🟢 Máy trạm: Đã kết nối</b> và toàn bộ văn bản tải về sẽ được lưu trực tiếp vào ổ cứng của máy tính đó!</li>
+                        <li>Nhấn nút <b>Tải QLVB_Web_Agent.exe</b> ở trên về máy tính bạn muốn dùng để lưu hồ sơ văn bản.</li>
+                        <li>Nháy đúp chuột mở file <b><code>QLVB_Web_Agent.exe</code></b> vừa tải về <i>(Nếu Windows hiện bảng SmartScreen, chọn <b>More info</b> &rarr; <b>Run anyway</b>)</i>.</li>
+                        <li>Khi cửa sổ nhỏ <b>QLVB Local Agent</b> hiện lên báo <b class="text-emerald-600">🟢 ĐANG HOẠT ĐỘNG</b>, trang web này sẽ tự động kết nối ngay lập tức!</li>
                     </ol>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">Địa chỉ kết nối Local Agent Bridge (Mặc định: <code>http://127.0.0.1:8765</code>):</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="txtAgentUrlConfig" class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs font-mono outline-none dark:text-white" value="http://127.0.0.1:8765">
-                        <button onclick="window.saveAgentUrlConfig()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">Lưu & Kết nối</button>
-                    </div>
+
+                <div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <button onclick="document.getElementById('agentHelpModal').classList.add('hidden'); if(!document.getElementById('appScreen').classList.contains('hidden')) window.switchTab('guide');" class="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-semibold">
+                        📖 Xem trang hướng dẫn chi tiết
+                    </button>
+                    <button onclick="window.manualCheckAgent()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow">
+                        🔄 Kiểm tra kết nối ngay
+                    </button>
                 </div>
             </div>
         </div>
@@ -890,113 +896,9 @@
     <!-- JAVASCRIPT LOGIC: SUPABASE AUTH + ADMIN APPROVAL + LOCAL AGENT BRIDGE     -->
     <!-- ========================================================================= -->
     <script>
-        const DEFAULT_SUPABASE_URL = 'https://xqmeeticiwclsvckpqrd.supabase.co';
-        const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxbWVldGljaXdjbHN2Y2twcXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMzQ4NDEsImV4cCI6MjEwNjYxMDg0MX0.izCPDQ8wIMqr8GEm47Oz2PTJB7srj5Fj7DpeKIR_HAk';
-
-        const savedSbConfig = JSON.parse(localStorage.getItem('qlvb_supabase_config') || '{}');
-        const SUPABASE_URL = savedSbConfig.url || DEFAULT_SUPABASE_URL;
-        const SUPABASE_ANON_KEY = savedSbConfig.key || DEFAULT_SUPABASE_ANON_KEY;
-
-        let AGENT_BASE_URL = (localStorage.getItem('qlvb_local_agent_url') || 'http://127.0.0.1:8765').replace(/\/+$/, '');
-
-        const QLVB_SQL_SCHEMA_TEXT = `-- =====================================================================================
--- KỊCH BẢN KHỞI TẠO BẢNG ĐỘC LẬP public.qlvb_profiles TRÊN SUPABASE
--- Dùng chung Project Supabase với /quanlydauthau nhưng hoàn toàn độc lập
--- Chỉ cần Admin phê duyệt (is_approved = true) là vào sử dụng được 100% tính năng
--- =====================================================================================
-
-CREATE TABLE IF NOT EXISTS public.qlvb_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email TEXT UNIQUE NOT NULL,
-    fullname TEXT NOT NULL,
-    is_admin BOOLEAN NOT NULL DEFAULT false,
-    is_approved BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE OR REPLACE FUNCTION public.is_qlvb_admin()
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT COALESCE((SELECT (is_admin = true AND is_approved = true) FROM public.qlvb_profiles WHERE id = auth.uid()), false);
-$$;
-
-CREATE OR REPLACE FUNCTION public.is_qlvb_approved()
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT COALESCE((SELECT is_approved FROM public.qlvb_profiles WHERE id = auth.uid()), false);
-$$;
-
-CREATE OR REPLACE FUNCTION public.qlvb_profiles_is_empty()
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-    SELECT NOT EXISTS (SELECT 1 FROM public.qlvb_profiles);
-$$;
-
-CREATE OR REPLACE FUNCTION public.handle_new_qlvb_user()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-    existing_count INT;
-    make_admin BOOLEAN;
-    make_approved BOOLEAN;
-    display_name TEXT;
-BEGIN
-    SELECT COUNT(*) INTO existing_count FROM public.qlvb_profiles;
-    IF existing_count = 0 THEN
-        make_admin := true;
-        make_approved := true;
-    ELSE
-        make_admin := false;
-        make_approved := false;
-    END IF;
-    display_name := COALESCE(
-        NULLIF(TRIM(NEW.raw_user_meta_data->>'fullname'), ''),
-        NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''),
-        NULLIF(TRIM(NEW.raw_user_meta_data->>'name'), ''),
-        split_part(NEW.email, '@', 1)
-    );
-    INSERT INTO public.qlvb_profiles (id, email, fullname, is_admin, is_approved)
-    VALUES (NEW.id, NEW.email, display_name, make_admin, make_approved)
-    ON CONFLICT (id) DO NOTHING;
-    RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS on_auth_user_created_qlvb ON auth.users;
-CREATE TRIGGER on_auth_user_created_qlvb
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_qlvb_user();
-
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sce_v2_profiles') THEN
-        INSERT INTO public.qlvb_profiles (id, email, fullname, is_admin, is_approved)
-        SELECT id, email, fullname, true, true
-        FROM public.sce_v2_profiles
-        WHERE role = 'admin' AND is_active = true
-        ON CONFLICT (id) DO UPDATE SET is_admin = true, is_approved = true, updated_at = now();
-    END IF;
-END $$;
-
-ALTER TABLE public.qlvb_profiles ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "qlvb_profiles_select_policy" ON public.qlvb_profiles;
-CREATE POLICY "qlvb_profiles_select_policy" ON public.qlvb_profiles
-    FOR SELECT TO authenticated USING (id = auth.uid() OR public.is_qlvb_approved() = true OR public.is_qlvb_admin() = true);
-
-DROP POLICY IF EXISTS "qlvb_profiles_insert_policy" ON public.qlvb_profiles;
-CREATE POLICY "qlvb_profiles_insert_policy" ON public.qlvb_profiles
-    FOR INSERT TO authenticated WITH CHECK (
-        public.is_qlvb_admin() = true
-        OR (id = auth.uid() AND ((public.qlvb_profiles_is_empty() = true AND is_admin = true AND is_approved = true) OR (is_admin = false AND is_approved = false)))
-    );
-
-DROP POLICY IF EXISTS "qlvb_profiles_update_policy" ON public.qlvb_profiles;
-CREATE POLICY "qlvb_profiles_update_policy" ON public.qlvb_profiles
-    FOR UPDATE TO authenticated
-    USING (public.is_qlvb_admin() = true OR id = auth.uid())
-    WITH CHECK (public.is_qlvb_admin() = true OR (id = auth.uid() AND is_admin = public.is_qlvb_admin() AND is_approved = public.is_qlvb_approved()));
-
-DROP POLICY IF EXISTS "qlvb_profiles_delete_policy" ON public.qlvb_profiles;
-CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
-    FOR DELETE TO authenticated USING (public.is_qlvb_admin() = true);`;
+        const SUPABASE_URL = 'https://xqmeeticiwclsvckpqrd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxbWVldGljaXdjbHN2Y2twcXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMzQ4NDEsImV4cCI6MjEwNjYxMDg0MX0.izCPDQ8wIMqr8GEm47Oz2PTJB7srj5Fj7DpeKIR_HAk';
+        const AGENT_BASE_URL = 'http://127.0.0.1:8765';
 
         const supabaseClient = (window.supabase && window.supabase.createClient)
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -1106,14 +1008,7 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 .maybeSingle();
 
             if (selErr) {
-                // Nếu bảng qlvb_profiles chưa được chạy SQL trên Supabase
-                if (selErr.code === '42P01' || (selErr.message && selErr.message.includes('qlvb_profiles'))) {
-                    throw new Error(
-                        'Bảng độc lập <b>qlvb_profiles</b> chưa được khởi tạo trên Supabase.<br>' +
-                        'Vui lòng bấm nút <b>[Cấu hình DB]</b> ở góc trên bên phải &rarr; Copy SQL và chạy trong Supabase SQL Editor!'
-                    );
-                }
-                throw new Error('Lỗi truy vấn hồ sơ QLVB: ' + selErr.message);
+                throw new Error('Không thể kiểm tra thông tin tài khoản: ' + selErr.message);
             }
 
             // 2. Nếu tài khoản đã có trên auth.users (ví dụ từ /quanlydauthau) nhưng lần đầu vào QLVB
@@ -1168,7 +1063,7 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 await supabaseClient.auth.signOut();
                 throw new Error(
                     '⏳ <b>Tài khoản đang chờ Quản trị viên (Admin) phê duyệt!</b><br>' +
-                    'Yêu cầu của bạn đã được ghi nhận vào bảng <code>qlvb_profiles</code>. Vui lòng liên hệ Admin duyệt để bắt đầu sử dụng.'
+                    'Yêu cầu đăng ký của bạn đã được ghi nhận. Vui lòng liên hệ Admin duyệt để bắt đầu sử dụng.'
                 );
             }
 
@@ -1558,49 +1453,20 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
         };
 
         // =====================================================================
-        // 3. CẤU HÌNH DB SUPABASE & LOCAL AGENT BRIDGE
+        // 3. KẾT NỐI LOCAL AGENT BRIDGE (`QLVB_Web_Agent.exe`)
         // =====================================================================
-        window.openSupabaseSetupModal = function() {
-            document.getElementById('cfgSupabaseUrl').value = SUPABASE_URL;
-            document.getElementById('cfgSupabaseKey').value = SUPABASE_ANON_KEY;
-            document.getElementById('qlvbSqlPreviewTextarea').value = QLVB_SQL_SCHEMA_TEXT;
-            document.getElementById('supabaseSetupModal').classList.remove('hidden');
-            document.getElementById('supabaseSetupModal').classList.add('flex');
-        };
-
-        window.copyQlvbSqlSchema = function() {
-            navigator.clipboard.writeText(QLVB_SQL_SCHEMA_TEXT).then(() => {
-                window.toast.fire({ icon: 'success', title: 'Đã copy kịch bản SQL bảng qlvb_profiles!' });
-            });
-        };
-
-        window.saveSupabaseConfig = function() {
-            const url = document.getElementById('cfgSupabaseUrl').value.trim();
-            const key = document.getElementById('cfgSupabaseKey').value.trim();
-            if (!url || !key) return Swal.fire('Lỗi', 'Vui lòng nhập đầy đủ URL và Key.', 'warning');
-            localStorage.setItem('qlvb_supabase_config', JSON.stringify({ url, key }));
-            window.location.reload();
-        };
-
-        window.resetDefaultSupabaseConfig = function() {
-            localStorage.removeItem('qlvb_supabase_config');
-            window.location.reload();
-        };
-
         window.openAgentHelpModal = function() {
-            document.getElementById('txtAgentUrlConfig').value = AGENT_BASE_URL;
             document.getElementById('agentHelpModal').classList.remove('hidden');
             document.getElementById('agentHelpModal').classList.add('flex');
         };
 
-        window.saveAgentUrlConfig = function() {
-            const val = document.getElementById('txtAgentUrlConfig').value.trim().replace(/\/+$/, '');
-            if (val) {
-                AGENT_BASE_URL = val;
-                localStorage.setItem('qlvb_local_agent_url', AGENT_BASE_URL);
+        window.manualCheckAgent = async function() {
+            await window.pollAgentStatus();
+            if (agentOnline) {
                 document.getElementById('agentHelpModal').classList.add('hidden');
-                window.pollAgentStatus();
-                window.toast.fire({ icon: 'info', title: 'Đã cập nhật địa chỉ kết nối Local Agent!' });
+                window.toast.fire({ icon: 'success', title: 'Đã kết nối thành công với QLVB Agent trên máy tính!' });
+            } else {
+                window.toast.fire({ icon: 'warning', title: 'Chưa phát hiện QLVB_Web_Agent.exe đang chạy. Hãy mở file .exe trên máy!' });
             }
         };
 
@@ -1638,7 +1504,18 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 dotAgent.className = 'w-2 h-2 rounded-full bg-emerald-400';
                 txtAgent.innerText = 'Máy trạm Local: Đã kết nối';
 
-                // Đồng bộ cài đặt lần đầu
+                // Cập nhật hộp trạng thái trong Tab Hướng dẫn
+                const gBox = document.getElementById('guideStatusBox');
+                const gDot = document.getElementById('guideStatusDot');
+                const gTxt = document.getElementById('guideStatusText');
+                if (gBox && gDot && gTxt) {
+                    gBox.className = 'mt-4 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-wrap items-center justify-between gap-2 text-xs';
+                    gDot.className = 'w-3 h-3 rounded-full bg-emerald-500';
+                    gTxt.className = 'font-bold text-emerald-900 dark:text-emerald-200';
+                    gTxt.innerText = '🟢 Đã kết nối thành công với QLVB_Web_Agent.exe trên máy tính này! Bạn có thể tra cứu và tải văn bản ngay.';
+                }
+
+                // Đồng bộ thư mục lưu trữ lần đầu
                 if (!settingsLoadedOnce && data.settings) {
                     settingsLoadedOnce = true;
                     const s = data.settings;
@@ -1649,12 +1526,6 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                     if (s.excel_path) {
                         document.getElementById('txtBatchExcelPath').value = s.excel_path;
                     }
-                    if (s.api_key) document.getElementById('txtSetApiKey').value = s.api_key;
-                    if (s.model) document.getElementById('cboSetModel').value = s.model;
-                    if (s.mode) document.getElementById('cboSetAiMode').value = s.mode;
-                    document.getElementById('chkSetRequireDate').checked = s.require_doc_date !== false;
-                    const rad = document.querySelector(`input[name="radBrowserChannel"][value="${s.channel || 'chrome'}"]`);
-                    if (rad) rad.checked = true;
                 }
 
                 // Cập nhật trạng thái trình duyệt QLVB
@@ -1670,11 +1541,6 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 } else {
                     btnBr.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-1.5';
                     txtBr.innerText = '👁️ QLVB: Đang hiện (Bấm để ẩn)';
-                }
-
-                // Cập nhật huy hiệu AI
-                if (data.ai_badge) {
-                    document.getElementById('badgeTopAi').innerText = data.ai_badge.text || '🤖 AI';
                 }
 
                 // Cập nhật trạng thái và tiến trình dưới đáy
@@ -1704,6 +1570,16 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 badgeAgent.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-red-500/20 text-red-200 border border-red-400/40 hover:bg-red-500/30 transition';
                 dotAgent.className = 'w-2 h-2 rounded-full bg-red-400 animate-ping';
                 txtAgent.innerText = 'Máy trạm: Chưa bật Agent';
+
+                const gBox = document.getElementById('guideStatusBox');
+                const gDot = document.getElementById('guideStatusDot');
+                const gTxt = document.getElementById('guideStatusText');
+                if (gBox && gDot && gTxt) {
+                    gBox.className = 'mt-4 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex flex-wrap items-center justify-between gap-2 text-xs';
+                    gDot.className = 'w-3 h-3 rounded-full bg-amber-500 animate-ping';
+                    gTxt.className = 'font-bold text-amber-900 dark:text-amber-200';
+                    gTxt.innerText = 'Trạng thái hiện tại: Chưa phát hiện QLVB_Web_Agent.exe đang chạy trên máy tính này.';
+                }
             }
         };
 
@@ -1749,9 +1625,10 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
         // 5. ĐIỀU HƯỚNG TABS & CÁC HÀNH ĐỘNG NGHIỆP VỤ
         // =====================================================================
         window.switchTab = function(tabKey) {
-            ['single', 'batch', 'history', 'settings'].forEach(k => {
+            ['single', 'batch', 'history', 'guide'].forEach(k => {
                 const page = document.getElementById('tabPage_' + k);
                 const btn = document.getElementById('tabBtn_' + k);
+                if (!page || !btn) return;
                 if (k === tabKey) {
                     page.classList.remove('hidden');
                     btn.className = 'flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-sm';
@@ -2131,52 +2008,6 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
             });
         };
 
-        // TAB 4: CÀI ĐẶT
-        window.testGeminiConnection = async function() {
-            if (!ensureAgentConnected()) return;
-            const key = document.getElementById('txtSetApiKey').value.trim();
-            const model = document.getElementById('cboSetModel').value;
-            if (!key) return Swal.fire('Cảnh báo', 'Vui lòng nhập Gemini API Key để kiểm tra.', 'warning');
-            const btn = document.getElementById('btnTestGemini');
-            btn.disabled = true;
-            btn.innerText = '⏳ Đang kiểm tra...';
-            try {
-                const res = await callAgentApi('/api/settings/test-gemini', 'POST', { api_key: key, model: model });
-                if (res.ok) {
-                    document.getElementById('cboSetModel').value = res.chosen_model || model;
-                    Swal.fire('Kết nối AI thành công!', `Mô hình hoạt động: ${res.chosen_model}\nPhản hồi thử nghiệm: "${res.sample_output}"`, 'success');
-                } else {
-                    Swal.fire('Lỗi kết nối Gemini API', res.error || 'Không thể kết nối.', 'error');
-                }
-            } finally {
-                btn.disabled = false;
-                btn.innerText = '⚡ Kiểm tra kết nối API';
-            }
-        };
-
-        window.saveAllSettings = async function() {
-            if (!ensureAgentConnected()) return;
-            const chEl = document.querySelector('input[name="radBrowserChannel"]:checked');
-            const payload = {
-                api_key: document.getElementById('txtSetApiKey').value.trim(),
-                model: document.getElementById('cboSetModel').value,
-                mode: document.getElementById('cboSetAiMode').value,
-                channel: chEl ? chEl.value : 'chrome',
-                require_doc_date: document.getElementById('chkSetRequireDate').checked,
-                base_dir: document.getElementById('txtSingleOutDir').value.trim()
-            };
-            const res = await callAgentApi('/api/settings/save', 'POST', payload);
-            if (res.ok) {
-                window.toast.fire({ icon: 'success', title: 'Đã lưu và áp dụng cấu hình!' });
-            }
-        };
-
-        window.syncDocTypesFromWeb = async function() {
-            if (!ensureAgentConnected()) return;
-            await callAgentApi('/api/settings/sync-doctypes', 'POST');
-            window.toast.fire({ icon: 'info', title: 'Đang quét danh mục Loại văn bản từ QLVB...' });
-        };
-
         // LOG VIEWER MODAL
         window.openLogModal = function() {
             document.getElementById('logViewerModal').classList.remove('hidden');
@@ -2250,6 +2081,8 @@ CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
                 if (e.key === 'Escape') {
                     window.closeLogModal();
                     window.closeAdminAccountsModal();
+                    document.getElementById('agentHelpModal')?.classList.add('hidden');
+                    document.getElementById('agentHelpModal')?.classList.remove('flex');
                 }
             });
 
