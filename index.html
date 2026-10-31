@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý & Tải Văn bản Điều hành Hà Nội (QLVB - SCE)</title>
+    <!-- Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="QLVB SCE">
+    <link rel="icon" type="image/png" sizes="192x192" href="app-icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        .step-card-transition { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .step-card-transition:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-200 font-sans transition-colors duration-300 flex flex-col">
+
+    <!-- LOADING OVERLAY -->
+    <div id="loader" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-slate-800 px-6 py-5 rounded-2xl shadow-2xl flex items-center gap-3.5 border border-slate-200 dark:border-slate-700">
+            <i class="fas fa-circle-notch fa-spin text-2xl text-blue-600 dark:text-blue-400"></i>
+            <span id="loaderText" class="text-sm font-semibold text-slate-700 dark:text-slate-200">Đang xử lý...</span>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (CHUẨN /QUANLYDAUTHAU - CHỈ CẦN ADMIN DUYỆT) -->
+    <!-- ========================================================================= -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4 py-8 transition-colors">
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600 relative">
+            <!-- Nút cấu hình SQL & Local Agent ở góc phải trên -->
+            <div class="absolute top-3 right-3 flex items-center gap-1.5">
+                <button type="button" onclick="window.openSupabaseSetupModal()" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-600 transition" title="Cấu hình bảng dữ liệu qlvb_profiles trên Supabase">
+                    <i class="fas fa-database mr-1 text-blue-600 dark:text-blue-400"></i>Cấu hình DB
+                </button>
+            </div>
+
+            <div class="text-center mb-6 mt-2">
+                <img src="logo-192.png" alt="Logo SCE" class="h-16 w-auto mx-auto mb-3 object-contain" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Emblem_of_Vietnam.svg/120px-Emblem_of_Vietnam.svg.png';">
+                <h2 class="text-lg sm:text-xl font-black text-blue-900 dark:text-blue-400 uppercase tracking-tight">HỆ THỐNG TRA CỨU & TẢI VĂN BẢN</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Trung tâm Xúc tiến Đầu tư và Hỗ trợ Doanh nghiệp Hà Nội (SCE)</p>
+                <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                    <i class="fas fa-hdd"></i>
+                    <span>Web App Điều Khiển • Lưu Dữ Liệu Local 100%</span>
+                </div>
+            </div>
+
+            <div id="loginError" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/40 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-lg text-center font-medium leading-relaxed"></div>
+            <div id="loginSuccess" class="hidden mb-4 p-3 bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs rounded-lg text-center font-medium leading-relaxed"></div>
+
+            <!-- FORM ĐĂNG NHẬP -->
+            <div id="authFormLogin" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email tài khoản</label>
+                    <input type="email" id="loginUser" autocomplete="email" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-slate-200" placeholder="Nhập email của bạn...">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Mật khẩu</label>
+                        <button type="button" onclick="window.handleForgotPassword()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Quên mật khẩu?</button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="loginPass" autocomplete="current-password" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 pr-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-slate-200" placeholder="••••••••" onkeypress="if(event.key === 'Enter') window.handleLogin()">
+                        <button type="button" onclick="const p=document.getElementById('loginPass'); p.type=p.type==='password'?'text':'password';" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm" title="Hiện/Ẩn mật khẩu">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Khung nhập mã 2FA (TOTP) nếu tài khoản có bật 2FA -->
+                <div id="mfaVerifyBox" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl space-y-2">
+                    <label class="block text-xs font-bold text-amber-800 dark:text-amber-300">Mã xác thực 2 lớp (6 số Google Authenticator)</label>
+                    <input type="text" id="loginMfaCode" maxlength="6" inputmode="numeric" class="w-full border border-amber-400 bg-white dark:bg-slate-800 rounded-lg p-2 text-center text-lg font-mono tracking-widest font-bold outline-none dark:text-white" placeholder="000000" onkeypress="if(event.key === 'Enter') window.verifyMfaAndProceed()">
+                    <button type="button" onclick="window.verifyMfaAndProceed()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-xs shadow transition">Xác nhận mã 2FA</button>
+                </div>
+
+                <button onclick="window.handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
+                    <i class="fas fa-sign-in-alt mr-1.5"></i>Đăng nhập hệ thống
+                </button>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                    <span class="flex-shrink mx-3 text-[11px] text-slate-400 uppercase">Hoặc</span>
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                </div>
+
+                <button type="button" onclick="window.handleGoogleLogin()" class="w-full bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold py-2.5 px-4 border border-slate-300 dark:border-slate-600 rounded-lg shadow-sm transition text-sm flex items-center justify-center gap-2.5">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+                        <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+                        <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21.4 7.4 24 12 24z"/>
+                    </svg>
+                    <span>Đăng nhập với Google</span>
+                </button>
+
+                <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                    Chưa có tài khoản? <button type="button" onclick="window.switchAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Đăng ký tài khoản mới</button>
+                </div>
+            </div>
+
+            <!-- FORM ĐĂNG KÝ TÀI KHOẢN (KHÔNG CẦN PHÂN QUYỀN PHÒNG BAN, CHỜ ADMIN DUYỆT) -->
+            <div id="authFormRegister" class="hidden space-y-3.5">
+                <div class="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300">
+                    <i class="fas fa-shield-halved mr-1"></i> Tài khoản đăng ký mới sẽ ở trạng thái <b>Chờ Admin phê duyệt</b>. Ngay khi Admin duyệt, bạn có thể sử dụng toàn bộ tính năng.
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Họ và tên cán bộ</label>
+                    <input type="text" id="regFullname" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="VD: Nguyễn Văn A">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email đăng nhập</label>
+                    <input type="email" id="regEmail" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="Nhập email của bạn...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mật khẩu (tối thiểu 6 ký tự)</label>
+                    <input type="password" id="regPassword" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="••••••••" onkeypress="if(event.key === 'Enter') window.handleRegisterAuth()">
+                </div>
+                <button onclick="window.handleRegisterAuth()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">
+                    <i class="fas fa-user-plus mr-1.5"></i>Gửi đăng ký tài khoản
+                </button>
+                <div class="text-center pt-2 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
+                    Đã có tài khoản? <button type="button" onclick="window.switchAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Quay lại Đăng nhập</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MÀN HÌNH ỨNG DỤNG CHÍNH (SAU KHI ĐĂNG NHẬP & ĐƯỢC ADMIN DUYỆT)             -->
+    <!-- ========================================================================= -->
+    <div id="appScreen" class="hidden flex-1 flex flex-col min-h-screen">
+        <!-- HEADER BANNER CHUẨN SCE -->
+        <header class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 dark:from-slate-900 dark:to-slate-950 text-white shadow-lg sticky top-0 z-30 border-b border-blue-800 dark:border-slate-800">
+            <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5 flex flex-col lg:flex-row justify-between items-center gap-3">
+                <!-- GÓC TRÁI: LOGO SCE + TÊN PHẦN MỀM -->
+                <div class="flex items-center gap-3 w-full lg:w-auto">
+                    <a href="javascript:void(0)" onclick="window.switchTab('single')" class="shrink-0 flex items-center justify-center p-1.5 bg-white rounded-xl shadow-md hover:scale-105 transition">
+                        <img src="logo-192.png" alt="SCE" class="h-8 sm:h-9 w-auto object-contain" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Emblem_of_Vietnam.svg/120px-Emblem_of_Vietnam.svg.png';">
+                    </a>
+                    <div class="min-w-0 flex-1">
+                        <h1 class="text-sm sm:text-base md:text-lg font-black tracking-wide text-white uppercase truncate">
+                            HỆ THỐNG TRA CỨU & TẢI VĂN BẢN ĐIỀU HÀNH HÀ NỘI
+                        </h1>
+                        <p class="text-[11px] text-blue-200/90 font-medium truncate">
+                            Trung tâm Xúc tiến Đầu tư và Hỗ trợ Doanh nghiệp Hà Nội (SCE) — Sở Tài chính Hà Nội
+                        </p>
+                    </div>
+                </div>
+
+                <!-- GÓC PHẢI: TRẠNG THÁI LOCAL AGENT, QLVB BROWSER, AI, DUYỆT TÀI KHOẢN & USER -->
+                <div class="flex flex-wrap items-center justify-end gap-2 w-full lg:w-auto">
+                    <!-- 1. Trạng thái kết nối Local Agent trên máy tính -->
+                    <button onclick="window.openAgentHelpModal()" id="badgeLocalAgent" class="px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-amber-500/20 text-amber-200 border border-amber-400/40 hover:bg-amber-500/30 transition" title="Trạng thái kết nối công cụ lưu file Local trên máy tính">
+                        <span id="dotLocalAgent" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="txtLocalAgent">Máy trạm: Đang kiểm tra...</span>
+                    </button>
+
+                    <!-- 2. Nút Mở / Ẩn Hiện Trình duyệt QLVB -->
+                    <button onclick="window.triggerOpenBrowser()" id="btnTopBrowser" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5">
+                        <i class="fas fa-globe"></i>
+                        <span id="txtTopBrowser">Mở QLVB (Đăng nhập)</span>
+                    </button>
+
+                    <!-- 3. Huy hiệu AI Gemini -->
+                    <button onclick="window.switchTab('settings')" id="badgeTopAi" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-blue-100 border border-white/15 transition">
+                        🤖 AI: Đang kiểm tra...
+                    </button>
+
+                    <!-- 4. Nút mở Bảng Nhật Ký (Log) -->
+                    <button onclick="window.openLogModal()" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-700/80 hover:bg-slate-600 text-white border border-slate-500/40 transition flex items-center gap-1.5" title="Xem nhật ký chi tiết hệ thống">
+                        <i class="fas fa-terminal text-emerald-400"></i>
+                        <span class="hidden sm:inline">Bảng Log</span>
+                        <span id="badgeLogCount" class="px-1.5 py-0.2 bg-slate-900 rounded text-[10px] text-emerald-300">0</span>
+                    </button>
+
+                    <!-- 5. Nút Quản lý & Duyệt Tài khoản (CHỈ HIỆN VỚI ADMIN) -->
+                    <button onclick="window.openAdminAccountsModal()" id="btnAdminApproval" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm transition items-center gap-1.5" title="Duyệt tài khoản đăng ký mới">
+                        <i class="fas fa-user-check"></i>
+                        <span>Duyệt TK</span>
+                        <span id="badgePendingUsers" class="hidden px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-extrabold">0</span>
+                    </button>
+
+                    <!-- 6. Nút Chuyển Sáng / Tối -->
+                    <button onclick="window.toggleDarkMode()" class="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 hover:bg-white/20 text-yellow-300 border border-white/15 transition" title="Chế độ Sáng / Tối">
+                        <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
+                    </button>
+
+                    <!-- 7. Thông tin người dùng & Đăng xuất -->
+                    <div class="flex items-center gap-1.5 pl-1 border-l border-white/20">
+                        <button onclick="window.openProfileModal()" id="userBadge" class="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-lg text-xs font-semibold text-white transition flex items-center gap-1.5" title="Thông tin tài khoản & Đổi mật khẩu">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="lblUserName">Cán bộ SCE</span>
+                        </button>
+                        <button onclick="window.handleLogout()" class="w-8 h-8 rounded-lg bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center shadow transition" title="Đăng xuất">
+                            <i class="fas fa-power-off text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- BANNER CẢNH BÁO KHI CHƯA BẬT LOCAL AGENT TRÊN MÁY TÍNH -->
+        <div id="bannerAgentOffline" class="hidden bg-amber-50 dark:bg-amber-950/60 border-b border-amber-300 dark:border-amber-800 px-4 py-2.5">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-amber-900 dark:text-amber-200">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-triangle-exclamation text-amber-600 dark:text-amber-400 text-base"></i>
+                    <span>
+                        <b>Chưa kết nối với Local Agent trên máy tính:</b> Để điều khiển trình duyệt QLVB và lưu hồ sơ trực tiếp vào ổ cứng máy tính này, hãy chạy file <b><code class="px-1.5 py-0.5 bg-amber-200/70 dark:bg-amber-900 rounded">Chay_QLVB_Web_Agent.bat</code></b> trên máy.
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="window.openAgentHelpModal()" class="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition">
+                        <i class="fas fa-plug mr-1"></i>Cấu hình / Hướng dẫn bật Agent
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- THANH ĐIỀU HƯỚNG 4 TABS NGHIỆP VỤ (CHUẨN /QUANLYDAUTHAU) -->
+        <div class="max-w-7xl w-full mx-auto px-3 sm:px-5 pt-3">
+            <div class="bg-slate-200/90 dark:bg-slate-800 p-1.5 rounded-xl flex flex-wrap gap-1.5 border border-slate-300/70 dark:border-slate-700">
+                <button onclick="window.switchTab('single')" id="tabBtn_single" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-sm">
+                    <span>🔍 Tra cứu nhanh & Tải đơn lẻ</span>
+                </button>
+                <button onclick="window.switchTab('batch')" id="tabBtn_batch" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <span>📁 Quét theo Dự án (Excel)</span>
+                </button>
+                <button onclick="window.switchTab('history')" id="tabBtn_history" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <span>📚 Kho văn bản & Lịch sử</span>
+                </button>
+                <button onclick="window.switchTab('settings')" id="tabBtn_settings" class="flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <span>⚙️ Cài đặt & Cấu hình</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- VÙNG NỘI DUNG CHÍNH CỦA CÁC TAB -->
+        <main class="max-w-7xl w-full mx-auto px-3 sm:px-5 py-3 flex-1 flex flex-col">
+
+            <!-- ================================================================= -->
+            <!-- TAB 1: TRA CỨU NHANH & TẢI ĐƠN LẺ                                 -->
+            <!-- ================================================================= -->
+            <section id="tabPage_single" class="space-y-3.5 flex-1">
+                <!-- Khối 1: Nội dung / Trích yếu & Tìm kiếm nâng cao -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs sm:text-sm font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                            🔍 Nội dung / Trích yếu cần tra cứu trên hệ thống QLVB:
+                        </label>
+                        <span id="lblAdvStatus" class="text-xs font-medium text-slate-400">Bộ lọc nâng cao: Đang tắt</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="txtSingleKeyword" class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="Nhập từ khóa trích yếu văn bản (VD: chấp thuận chủ trương đầu tư, Tây Hồ Tây...)" onkeypress="if(event.key==='Enter') window.triggerSingleCheckCount()">
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="window.toggleSingleAdv()" id="btnToggleSingleAdv" class="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                ⚙️ Tìm kiếm nâng cao ▾
+                            </button>
+                            <button onclick="window.clearSingleSearch()" class="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 border border-slate-300 dark:border-slate-600 transition">
+                                ✖ Xóa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Khung tìm kiếm nâng cao -->
+                    <div id="boxSingleAdv" class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Số ký hiệu văn bản:</label>
+                            <input type="text" id="txtSingleNumber" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 123/QĐ-UBND">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Cơ quan ban hành:</label>
+                            <input type="text" id="txtSingleAgency" list="agencyList" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Chọn hoặc nhập tên cơ quan...">
+                            <datalist id="agencyList">
+                                <option value="Sở Xây dựng"></option>
+                                <option value="Sở Tài chính"></option>
+                                <option value="UBND thành phố Hà Nội"></option>
+                                <option value="Văn phòng UBND thành phố Hà Nội"></option>
+                                <option value="Sở Quy hoạch - Kiến trúc"></option>
+                                <option value="Sở Kế hoạch và Đầu tư"></option>
+                                <option value="Sở Tài nguyên và Môi trường"></option>
+                                <option value="Sở Giao thông vận tải"></option>
+                                <option value="Sở Nông nghiệp và Môi trường"></option>
+                                <option value="Sở Công Thương"></option>
+                                <option value="Sở Thông tin và Truyền thông"></option>
+                                <option value="Sở Giáo dục và Đào tạo"></option>
+                                <option value="Sở Y tế"></option>
+                                <option value="Sở Tư pháp"></option>
+                                <option value="Sở Khoa học và Công nghệ"></option>
+                                <option value="Cục Thuế thành phố Hà Nội"></option>
+                                <option value="Hội đồng nhân dân thành phố Hà Nội"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Từ ngày (dd/mm/yyyy):</label>
+                            <input type="text" id="txtSingleFrom" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 01/01/2026">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Đến ngày (dd/mm/yyyy):</label>
+                            <input type="text" id="txtSingleTo" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 31/12/2026">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Khối 2: Thư mục lưu Local & Định dạng đặt tên file -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        📁 Thư mục lưu trên máy tính (Local) & Tùy biến định dạng file tải
+                    </h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Thư mục lưu file:</label>
+                        <div class="lg:col-span-7 flex gap-2">
+                            <input type="text" id="txtSingleOutDir" class="flex-1 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="C:\Users\...\downloads">
+                        </div>
+                        <div class="lg:col-span-3 flex gap-2">
+                            <button onclick="window.chooseLocalFolder('txtSingleOutDir')" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📂 Chọn thư mục...
+                            </button>
+                            <button onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'folder')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📁 Mở
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Định dạng tên file:</label>
+                        <div class="lg:col-span-5">
+                            <select id="cboSingleNaming" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                                <option value="[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}">[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}</option>
+                                <option value="[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}">[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}</option>
+                                <option value="[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}">[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}</option>
+                                <option value="[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}">[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}</option>
+                                <option value="[Nguyên bản] {ten_goc}">[Nguyên bản] {ten_goc}</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-5 text-[11px] text-slate-500 dark:text-slate-400">
+                            💡 Biến hỗ trợ: <code>{ngay}</code>, <code>{so_kh}</code>, <code>{loai_vb}</code>, <code>{co_quan}</code>, <code>{tom_tat}</code>, <code>{trich_yeu}</code>, <code>{ten_goc}</code>
+                        </div>
+                    </div>
+
+                    <div class="pt-1 flex flex-wrap items-center gap-2">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <input type="checkbox" id="chkSingleUseAi" checked class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                            <span>✨ Sử dụng Trí tuệ Nhân tạo (Gemini AI) để tóm tắt cốt lõi vào tên file</span>
+                        </label>
+                        <span class="text-[11px] italic text-slate-500 dark:text-slate-400">(Bỏ chọn để tải nhanh bằng bộ quy tắc rút gọn tiếng Việt offline)</span>
+                    </div>
+                </div>
+
+                <!-- Khối 3: Quy trình 3 bước chuẩn hóa (Stepper Pipeline) -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        🚀 Quy trình thao tác tra cứu & tải dữ liệu (3 Bước chuẩn hóa)
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- Bước 1 -->
+                        <div onclick="window.triggerOpenBrowser()" id="cardSingleStep1" class="step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-blue-600 bg-blue-50/70 dark:bg-blue-950/40">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span id="badgeSingleStep1Num" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-700 text-white">BƯỚC 1</span>
+                                <span id="badgeSingleStep1State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">👉 BƯỚC NÀY</span>
+                            </div>
+                            <div id="titleSingleStep1" class="text-sm font-bold text-blue-900 dark:text-blue-200">🌐 Bước 1: Mở QLVB & Đăng nhập</div>
+                            <div id="descSingleStep1" class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">Bấm để mở trình duyệt Pop-up và đăng nhập tài khoản</div>
+                        </div>
+
+                        <!-- Bước 2 -->
+                        <div onclick="window.triggerSingleCheckCount()" id="cardSingleStep2" class="step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span id="badgeSingleStep2Num" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">BƯỚC 2</span>
+                                <span id="badgeSingleStep2State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">Chờ Bước 1</span>
+                            </div>
+                            <div id="titleSingleStep2" class="text-sm font-bold text-slate-600 dark:text-slate-300">🔍 Bước 2: Kiểm tra số lượng</div>
+                            <div id="descSingleStep2" class="text-xs text-slate-400 mt-0.5">Kiểm đếm trước số văn bản tìm thấy trên QLVB</div>
+                        </div>
+
+                        <!-- Bước 3 -->
+                        <div onclick="window.triggerSingleDownload()" id="cardSingleStep3" class="step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span id="badgeSingleStep3Num" class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">BƯỚC 3</span>
+                                <span id="badgeSingleStep3State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">Chờ Bước 2</span>
+                            </div>
+                            <div id="titleSingleStep3" class="text-sm font-bold text-slate-600 dark:text-slate-300">🚀 Bước 3: Bắt đầu tải ngay</div>
+                            <div id="descSingleStep3" class="text-xs text-slate-400 mt-0.5">Tải trọn bộ file đính kèm, khử trùng & xuất báo cáo</div>
+                        </div>
+                    </div>
+
+                    <!-- Thanh nút phụ trợ -->
+                    <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.resetSingleFlow()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                🔄 Làm lại từ đầu
+                            </button>
+                            <button onclick="window.triggerStopTask()" id="btnSingleStop" disabled class="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-xs font-bold transition">
+                                ⏹ Dừng tiến trình
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'folder')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📁 Mở thư mục tải
+                            </button>
+                            <button onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'report')" class="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-xs font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition">
+                                📊 Xem Excel tổng hợp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Khối hướng dẫn động Bước hiện tại -->
+                <div id="boxSingleTip" class="rounded-xl p-3.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200">
+                    <div id="lblSingleTipTitle" class="font-extrabold mb-1">💡 HƯỚNG DẪN BƯỚC 1:</div>
+                    <div id="lblSingleTipDesc">👉 Hãy nhấp vào ô <b>[Bước 1: Mở QLVB & Đăng nhập]</b> ở trên để mở trình duyệt Pop-up và đăng nhập tài khoản QLVB. Trình duyệt sẽ tự động ẩn vào chạy ngầm ngay khi đăng nhập xong.</div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 2: QUÉT THEO DỰ ÁN (EXCEL)                                    -->
+            <!-- ================================================================= -->
+            <section id="tabPage_batch" class="hidden space-y-3.5 flex-1 flex flex-col">
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        📂 Cấu hình nguồn danh mục dự án Excel & Thư mục lưu trữ Local
+                    </h3>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">File Excel dự án:</label>
+                        <div class="lg:col-span-6">
+                            <input type="text" id="txtBatchExcelPath" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Đường dẫn file danh_sach_du_an.xlsx...">
+                        </div>
+                        <div class="lg:col-span-4 flex flex-wrap gap-1.5">
+                            <button onclick="window.chooseLocalExcel()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📂 Chọn trên máy...
+                            </button>
+                            <label class="cursor-pointer px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-xs font-semibold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition">
+                                ⬆️ Tải file lên
+                                <input type="file" id="fileBatchExcelUpload" accept=".xlsx,.xls" class="hidden" onchange="window.uploadBatchExcelFile(this)">
+                            </label>
+                            <button onclick="window.createSampleExcel()" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition">
+                                📄 Tạo file mẫu
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Thư mục gốc lưu trữ:</label>
+                        <div class="lg:col-span-6">
+                            <input type="text" id="txtBatchOutDir" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                        </div>
+                        <div class="lg:col-span-4 flex gap-1.5">
+                            <button onclick="window.chooseLocalFolder('txtBatchOutDir')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📂 Chọn thư mục...
+                            </button>
+                            <button onclick="window.openLocalPath(document.getElementById('txtBatchOutDir').value, 'folder')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                📁 Mở kết quả
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quy trình 3 bước Tab 2 -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div onclick="window.chooseLocalExcel()" id="cardBatchStep1" class="step-card-transition cursor-pointer rounded-xl p-3 border-2 border-blue-600 bg-blue-50/70 dark:bg-blue-950/40">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-700 text-white">BƯỚC 1</span>
+                                <span id="badgeBatchStep1State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">👉 BƯỚC NÀY</span>
+                            </div>
+                            <div class="text-sm font-bold text-blue-900 dark:text-blue-200">📂 Bước 1: Chọn file Excel dự án</div>
+                            <div id="descBatchStep1" class="text-xs text-blue-700 dark:text-blue-300 mt-0.5">Chọn file danh mục dự án hoặc tạo file mẫu</div>
+                        </div>
+
+                        <div onclick="window.loadBatchProjects()" id="cardBatchStep2" class="step-card-transition cursor-pointer rounded-xl p-3 border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">BƯỚC 2</span>
+                                <span id="badgeBatchStep2State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">Chờ Bước 1</span>
+                            </div>
+                            <div id="titleBatchStep2" class="text-sm font-bold text-slate-700 dark:text-slate-200">📋 Bước 2: Nạp danh sách dự án</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Đọc dữ liệu dự án và từ khóa vào bảng theo dõi</div>
+                        </div>
+
+                        <div onclick="window.startBatchScan()" id="cardBatchStep3" class="step-card-transition cursor-pointer rounded-xl p-3 border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">BƯỚC 3</span>
+                                <span id="badgeBatchStep3State" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-400">Chờ Bước 2</span>
+                            </div>
+                            <div class="text-sm font-bold text-slate-700 dark:text-slate-200">🚀 Bước 3: Bắt đầu quét hàng loạt</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Tự động tìm kiếm, khử trùng & tải hồ sơ từng dự án</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-2">
+                            <button onclick="window.resetBatchFlow()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                🔄 Làm lại danh sách
+                            </button>
+                            <button onclick="window.triggerStopTask()" id="btnBatchStop" disabled class="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-xs font-bold transition">
+                                ⏹ Dừng quét
+                            </button>
+                        </div>
+                        <div id="lblBatchKpi" class="text-xs font-bold text-slate-600 dark:text-slate-300">
+                            📊 Danh mục: Chưa nạp dữ liệu
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách dự án -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1 flex flex-col">
+                    <div class="overflow-x-auto flex-1 max-h-[360px]">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                            <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 sticky top-0">
+                                <tr>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700 w-24 text-center">Mã DA</th>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700 w-64">Tên dự án đầu tư</th>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700">Từ khóa tìm kiếm trên QLVB</th>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700 w-28 text-center">Từ ngày</th>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700 w-28 text-center">Đến ngày</th>
+                                    <th class="p-3 font-bold border-b dark:border-slate-700 w-28 text-center">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyBatchProjects" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-slate-400 italic">Nhấn "Bước 2: Nạp danh sách dự án" hoặc "Tạo file mẫu" để hiển thị danh sách dự án.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 3: KHO VĂN BẢN & LỊCH SỬ (SQLITE INDEX.DB LOCAL)              -->
+            <!-- ================================================================= -->
+            <section id="tabPage_history" class="hidden space-y-3.5 flex-1 flex flex-col">
+                <!-- Thanh tìm kiếm trong kho -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[260px]">
+                        <span class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase">🔍 Tìm trong kho:</span>
+                        <input type="text" id="txtHistoryFilter" oninput="window.filterHistoryClient()" onkeypress="if(event.key==='Enter') window.loadHistoryRecords()" class="flex-1 max-w-md border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Gõ Số ký hiệu, Trích yếu, Cơ quan ban hành, hoặc Dự án...">
+                        <button onclick="window.loadHistoryRecords()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition">
+                            🔄 Làm mới kho
+                        </button>
+                        <button onclick="document.getElementById('txtHistoryFilter').value=''; window.loadHistoryRecords();" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-600 dark:text-slate-300 transition">
+                            ✖ Xóa lọc
+                        </button>
+                    </div>
+                    <div id="lblHistoryCount" class="text-xs font-bold text-slate-500 dark:text-slate-400">
+                        Số lượng: 0 văn bản
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách văn bản đã tải -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex-1">
+                    <div class="overflow-x-auto max-h-[300px]">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 sticky top-0">
+                                <tr>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700">Số ký hiệu</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700 text-center">Ngày BH</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700">Loại VB</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700">Cơ quan BH</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700">Dự án liên quan</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700">Tên file chính</th>
+                                    <th class="p-2.5 font-bold border-b dark:border-slate-700 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyHistory" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                <tr>
+                                    <td colspan="7" class="p-6 text-center text-slate-400 italic">Đang tải dữ liệu kho văn bản...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Khung Chi tiết Trích yếu & Tóm tắt AI (Chuẩn màu Amber /quanlydauthau) -->
+                <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 rounded-xl p-4 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div id="lblHistoryDetailTitle" class="text-xs sm:text-sm font-extrabold text-amber-900 dark:text-amber-300">
+                            💡 Chọn một văn bản từ danh sách phía trên để xem toàn văn trích yếu & tóm tắt AI
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button onclick="window.copyHistorySummary()" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-semibold transition">
+                                📋 Sao chép tóm tắt
+                            </button>
+                            <button onclick="window.openSelectedHistoryFolder()" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-semibold transition">
+                                📁 Mở thư mục chứa
+                            </button>
+                            <button onclick="window.openSelectedHistoryFile()" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition">
+                                📄 Mở file PDF chính
+                            </button>
+                        </div>
+                    </div>
+                    <div id="txtHistoryDetailBody" class="bg-white dark:bg-slate-900 border border-amber-200 dark:border-slate-700 rounded-lg p-3 text-xs sm:text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap min-h-[96px] max-h-[160px] overflow-y-auto font-medium">(Chưa có văn bản nào được chọn)</div>
+                    <div id="lblHistoryDetailPath" class="text-[11px] font-mono text-amber-800 dark:text-amber-400 truncate">Đường dẫn file: -</div>
+                </div>
+            </section>
+
+            <!-- ================================================================= -->
+            <!-- TAB 4: CÀI ĐẶT & CẤU HÌNH                                         -->
+            <!-- ================================================================= -->
+            <section id="tabPage_settings" class="hidden space-y-3.5 flex-1">
+                <!-- Cấu hình Gemini AI -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        🤖 Cấu hình Trí tuệ Nhân tạo Gemini AI (Tóm tắt cốt lõi)
+                    </h3>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Gemini API Key:</label>
+                        <div class="lg:col-span-6 relative">
+                            <input type="password" id="txtSetApiKey" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 pr-9 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="AIzaSy...">
+                            <button type="button" onclick="const el=document.getElementById('txtSetApiKey'); el.type=el.type==='password'?'text':'password';" class="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">
+                                <i class="far fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="lg:col-span-4 flex flex-wrap gap-2">
+                            <button onclick="window.testGeminiConnection()" id="btnTestGemini" class="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition">
+                                ⚡ Kiểm tra kết nối API
+                            </button>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                                🌐 Lấy Key miễn phí
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Mô hình Gemini:</label>
+                        <div class="lg:col-span-4">
+                            <select id="cboSetModel" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                                <option value="gemini-3.8-flash">gemini-3.8-flash (Khuyên dùng)</option>
+                                <option value="gemini-3.8-flash-lite">gemini-3.8-flash-lite</option>
+                                <option value="gemini-3.8-pro">gemini-3.8-pro</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                                <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                            </select>
+                        </div>
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Chế độ phân tích:</label>
+                        <div class="lg:col-span-4">
+                            <select id="cboSetAiMode" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                                <option value="full">Đầy đủ (Đọc trích yếu + trang đầu PDF scan)</option>
+                                <option value="metadata_only">Chỉ trích yếu (Tiết kiệm Token)</option>
+                                <option value="off">Tắt AI (Dùng bộ quy tắc offline)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cấu hình Trình duyệt & Quy tắc lọc -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
+                        🌐 Cấu hình Trình duyệt Tự động hóa Playwright & Quy tắc lọc
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-6 text-xs sm:text-sm">
+                        <span class="font-bold text-slate-700 dark:text-slate-300">Kênh trình duyệt:</span>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="radBrowserChannel" value="chrome" checked class="text-blue-600">
+                            <span>Google Chrome (Khuyên dùng)</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="radBrowserChannel" value="msedge" class="text-blue-600">
+                            <span>Microsoft Edge</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            <input type="checkbox" id="chkSetRequireDate" checked class="w-4 h-4 text-blue-600 rounded">
+                            <span>Chỉ tải các văn bản chính thức đã có đủ Số ký hiệu và Ngày tháng (Tự động bỏ qua dự thảo chưa ban hành)</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-700">
+                        <button onclick="window.syncDocTypesFromWeb()" class="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                            🔄 Quét & Đồng bộ tất cả Loại văn bản từ trang Tra cứu Web
+                        </button>
+                        <button onclick="window.saveAllSettings()" class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow transition">
+                            💾 Lưu và Áp dụng Cấu hình
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ================================================================= -->
+        <!-- THANH TRẠNG THÁI TƯƠNG TÁC TÍCH HỢP DƯỚI CÙNG (STATUS BAR)        -->
+        <!-- ================================================================= -->
+        <footer class="sticky bottom-0 z-20 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-lg">
+            <!-- Thanh tiến trình mỏng 4px -->
+            <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <div id="bottomProgressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-3">
+                <div onclick="window.openLogModal()" class="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1">
+                    <span id="badgeBottomStatus" class="shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                        ● SẴN SÀNG
+                    </span>
+                    <span id="lblBottomStatusMsg" class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">
+                        Sẵn sàng thực hiện thao tác.
+                    </span>
+                </div>
+                <button onclick="window.openLogModal()" class="shrink-0 px-3 py-1 rounded-lg bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold transition">
+                    📋 Xem nhật ký chi tiết (<span id="lblBottomLogCount">0</span> dòng) ↗
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 1: QUẢN LÝ & DUYỆT TÀI KHOẢN DÀNH CHO ADMIN (KHÔNG CẦN PHÂN QUYỀN)  -->
+    <!-- ========================================================================= -->
+    <div id="adminAccountsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[88vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white px-5 py-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fas fa-user-shield text-amber-400 text-lg"></i>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-extrabold uppercase">Quản lý & Phê duyệt Tài khoản Truy cập (QLVB)</h3>
+                        <p class="text-[11px] text-blue-200">Tài khoản được Admin duyệt sẽ sử dụng được toàn bộ tính năng phần mềm (Không giới hạn phân quyền)</p>
+                    </div>
+                </div>
+                <button onclick="window.closeAdminAccountsModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-red-600 text-white flex items-center justify-center transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/50">
+                <div class="flex items-center gap-1.5">
+                    <button onclick="window.setAdminUserFilter('all')" id="btnFilterUsers_all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white">Tất cả</button>
+                    <button onclick="window.setAdminUserFilter('pending')" id="btnFilterUsers_pending" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 text-amber-700 dark:text-amber-300 border border-slate-300 dark:border-slate-600">⏳ Chờ duyệt</button>
+                    <button onclick="window.setAdminUserFilter('approved')" id="btnFilterUsers_approved" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 border border-slate-300 dark:border-slate-600">✅ Đã duyệt</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="txtSearchAdminUsers" oninput="window.renderAdminUsersTable()" class="border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1 text-xs outline-none dark:text-white" placeholder="Tìm tên hoặc email...">
+                    <button onclick="window.fetchAllProfilesForAdmin()" class="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-xs font-semibold">
+                        <i class="fas fa-sync-alt mr-1"></i>Làm mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <th class="p-2.5 font-bold border-b dark:border-slate-700">Họ và tên</th>
+                            <th class="p-2.5 font-bold border-b dark:border-slate-700">Email đăng nhập</th>
+                            <th class="p-2.5 font-bold border-b dark:border-slate-700 text-center">Trạng thái duyệt</th>
+                            <th class="p-2.5 font-bold border-b dark:border-slate-700 text-center">Quyền Quản trị</th>
+                            <th class="p-2.5 font-bold border-b dark:border-slate-700 text-right">Thao tác phê duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyAdminUsers" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 2: CỬA SỐ NHẬT KÝ CHI TIẾT TOÀN MÀN HÌNH (TERMINAL LOG VIEWER)      -->
+    <!-- ========================================================================= -->
+    <div id="logViewerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col border border-slate-700 overflow-hidden">
+            <div class="bg-blue-950 px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-extrabold uppercase tracking-wide text-white">📋 Nhật ký chi tiết & Tiến trình hệ thống</span>
+                    <span id="badgePopupLogState" class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300">● SẴN SÀNG</span>
+                    <span id="lblPopupLogCount" class="text-xs text-blue-300">Tổng số: 0 dòng</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="window.copyAllLogs()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold">📋 Sao chép</button>
+                    <button onclick="window.exportLogsTxt()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold">💾 Xuất .txt</button>
+                    <button onclick="window.clearAllLogs()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs font-semibold">🧹 Xóa log</button>
+                    <button onclick="window.closeLogModal()" class="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold">✖ Đóng (Esc)</button>
+                </div>
+            </div>
+            <div class="bg-slate-800/80 px-4 py-2 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-400">🔍 Lọc từ khóa:</span>
+                    <input type="text" id="txtLogFilter" oninput="window.renderLogTerminal()" class="bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-xs text-white outline-none w-64" placeholder="Nhập nội dung cần lọc...">
+                    <button onclick="document.getElementById('txtLogFilter').value=''; window.renderLogTerminal();" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-300">✖ Xóa lọc</button>
+                </div>
+                <label class="inline-flex items-center gap-2 cursor-pointer text-slate-300">
+                    <input type="checkbox" id="chkLogAutoScroll" checked class="rounded text-blue-500">
+                    <span>Tự cuộn theo dòng mới</span>
+                </label>
+            </div>
+            <div id="logTerminalArea" class="flex-1 p-4 overflow-y-auto font-mono text-xs space-y-1 bg-slate-950"></div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 3: CẤU HÌNH SUPABASE & KỊCH BẢN SQL BẢNG ĐỘC LẬP `qlvb_profiles`     -->
+    <!-- ========================================================================= -->
+    <div id="supabaseSetupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="bg-blue-900 text-white px-5 py-3.5 flex items-center justify-between">
+                <h3 class="text-sm sm:text-base font-extrabold uppercase">🗄️ Cấu hình Supabase & Bảng Độc lập `qlvb_profiles`</h3>
+                <button onclick="document.getElementById('supabaseSetupModal').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-red-600 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+                <div class="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                    <b>Hướng dẫn khởi tạo bảng lần đầu (Chỉ mất 30 giây):</b><br>
+                    1. Hệ thống đang dùng chung Project Supabase với <code>/quanlydauthau</code> nhưng lưu ở bảng riêng biệt hoàn toàn là <b><code>public.qlvb_profiles</code></b>.<br>
+                    2. Bấm nút <b>[📋 Copy toàn bộ SQL `qlvb_profiles`]</b> bên dưới &rarr; Mở <b>Supabase SQL Editor</b> &rarr; Dán và bấm <b>Run</b>.<br>
+                    3. Kịch bản SQL sẽ tự động đồng bộ luôn tài khoản Admin từ <code>sce_v2_profiles</code> sang <code>qlvb_profiles</code> để bạn đăng nhập được ngay!
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Supabase Project URL:</label>
+                        <input type="text" id="cfgSupabaseUrl" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Supabase Anon Key:</label>
+                        <input type="text" id="cfgSupabaseKey" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg p-2 text-xs font-mono">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold">Kịch bản SQL khởi tạo bảng độc lập `public.qlvb_profiles`:</label>
+                        <button onclick="window.copyQlvbSqlSchema()" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow">
+                            📋 Copy toàn bộ SQL `qlvb_profiles`
+                        </button>
+                    </div>
+                    <textarea id="qlvbSqlPreviewTextarea" readonly class="w-full h-48 border border-slate-300 dark:border-slate-700 bg-slate-950 text-emerald-300 font-mono text-[11px] p-3 rounded-xl outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t dark:border-slate-700">
+                    <button onclick="window.resetDefaultSupabaseConfig()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-semibold">Khôi phục mặc định</button>
+                    <button onclick="window.saveSupabaseConfig()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">Lưu cấu hình</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 4: HƯỚNG DẪN & CẤU HÌNH LOCAL AGENT BRIDGE                          -->
+    <!-- ========================================================================= -->
+    <div id="agentHelpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="bg-blue-900 text-white px-5 py-3.5 flex items-center justify-between">
+                <h3 class="text-sm sm:text-base font-extrabold uppercase">🔌 Kết nối Máy trạm Local (QLVB Local Agent)</h3>
+                <button onclick="document.getElementById('agentHelpModal').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-red-600 text-white flex items-center justify-center">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs sm:text-sm">
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2 leading-relaxed">
+                    <p class="font-bold text-blue-900 dark:text-blue-300">Làm thế nào để Web App lưu dữ liệu trực tiếp trên máy tính được chọn?</p>
+                    <ol class="list-decimal pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                        <li>Trên chiếc máy tính bạn muốn dùng để tải và lưu trữ hồ sơ văn bản, hãy mở thư mục phần mềm <b>QLVB</b>.</li>
+                        <li>Nháy đúp chạy file <b><code>Chay_QLVB_Web_Agent.bat</code></b> (hoặc lệnh <code>python qlvb_tool/web_agent.py</code>).</li>
+                        <li>Ngay lập tức, biểu tượng trên thanh Header sẽ chuyển sang <b class="text-emerald-600">🟢 Máy trạm: Đã kết nối</b> và toàn bộ văn bản tải về sẽ được lưu trực tiếp vào ổ cứng của máy tính đó!</li>
+                    </ol>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1">Địa chỉ kết nối Local Agent Bridge (Mặc định: <code>http://127.0.0.1:8765</code>):</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="txtAgentUrlConfig" class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs font-mono outline-none dark:text-white" value="http://127.0.0.1:8765">
+                        <button onclick="window.saveAgentUrlConfig()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold">Lưu & Kết nối</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- JAVASCRIPT LOGIC: SUPABASE AUTH + ADMIN APPROVAL + LOCAL AGENT BRIDGE     -->
+    <!-- ========================================================================= -->
+    <script>
+        const DEFAULT_SUPABASE_URL = 'https://xqmeeticiwclsvckpqrd.supabase.co';
+        const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxbWVldGljaXdjbHN2Y2twcXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMzQ4NDEsImV4cCI6MjEwNjYxMDg0MX0.izCPDQ8wIMqr8GEm47Oz2PTJB7srj5Fj7DpeKIR_HAk';
+
+        const savedSbConfig = JSON.parse(localStorage.getItem('qlvb_supabase_config') || '{}');
+        const SUPABASE_URL = savedSbConfig.url || DEFAULT_SUPABASE_URL;
+        const SUPABASE_ANON_KEY = savedSbConfig.key || DEFAULT_SUPABASE_ANON_KEY;
+
+        let AGENT_BASE_URL = (localStorage.getItem('qlvb_local_agent_url') || 'http://127.0.0.1:8765').replace(/\/+$/, '');
+
+        const QLVB_SQL_SCHEMA_TEXT = `-- =====================================================================================
+-- KỊCH BẢN KHỞI TẠO BẢNG ĐỘC LẬP public.qlvb_profiles TRÊN SUPABASE
+-- Dùng chung Project Supabase với /quanlydauthau nhưng hoàn toàn độc lập
+-- Chỉ cần Admin phê duyệt (is_approved = true) là vào sử dụng được 100% tính năng
+-- =====================================================================================
+
+CREATE TABLE IF NOT EXISTS public.qlvb_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT UNIQUE NOT NULL,
+    fullname TEXT NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT false,
+    is_approved BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE OR REPLACE FUNCTION public.is_qlvb_admin()
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT COALESCE((SELECT (is_admin = true AND is_approved = true) FROM public.qlvb_profiles WHERE id = auth.uid()), false);
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_qlvb_approved()
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT COALESCE((SELECT is_approved FROM public.qlvb_profiles WHERE id = auth.uid()), false);
+$$;
+
+CREATE OR REPLACE FUNCTION public.qlvb_profiles_is_empty()
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+    SELECT NOT EXISTS (SELECT 1 FROM public.qlvb_profiles);
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_qlvb_user()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+    existing_count INT;
+    make_admin BOOLEAN;
+    make_approved BOOLEAN;
+    display_name TEXT;
+BEGIN
+    SELECT COUNT(*) INTO existing_count FROM public.qlvb_profiles;
+    IF existing_count = 0 THEN
+        make_admin := true;
+        make_approved := true;
+    ELSE
+        make_admin := false;
+        make_approved := false;
+    END IF;
+    display_name := COALESCE(
+        NULLIF(TRIM(NEW.raw_user_meta_data->>'fullname'), ''),
+        NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''),
+        NULLIF(TRIM(NEW.raw_user_meta_data->>'name'), ''),
+        split_part(NEW.email, '@', 1)
+    );
+    INSERT INTO public.qlvb_profiles (id, email, fullname, is_admin, is_approved)
+    VALUES (NEW.id, NEW.email, display_name, make_admin, make_approved)
+    ON CONFLICT (id) DO NOTHING;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_qlvb ON auth.users;
+CREATE TRIGGER on_auth_user_created_qlvb
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_qlvb_user();
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sce_v2_profiles') THEN
+        INSERT INTO public.qlvb_profiles (id, email, fullname, is_admin, is_approved)
+        SELECT id, email, fullname, true, true
+        FROM public.sce_v2_profiles
+        WHERE role = 'admin' AND is_active = true
+        ON CONFLICT (id) DO UPDATE SET is_admin = true, is_approved = true, updated_at = now();
+    END IF;
+END $$;
+
+ALTER TABLE public.qlvb_profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "qlvb_profiles_select_policy" ON public.qlvb_profiles;
+CREATE POLICY "qlvb_profiles_select_policy" ON public.qlvb_profiles
+    FOR SELECT TO authenticated USING (id = auth.uid() OR public.is_qlvb_approved() = true OR public.is_qlvb_admin() = true);
+
+DROP POLICY IF EXISTS "qlvb_profiles_insert_policy" ON public.qlvb_profiles;
+CREATE POLICY "qlvb_profiles_insert_policy" ON public.qlvb_profiles
+    FOR INSERT TO authenticated WITH CHECK (
+        public.is_qlvb_admin() = true
+        OR (id = auth.uid() AND ((public.qlvb_profiles_is_empty() = true AND is_admin = true AND is_approved = true) OR (is_admin = false AND is_approved = false)))
+    );
+
+DROP POLICY IF EXISTS "qlvb_profiles_update_policy" ON public.qlvb_profiles;
+CREATE POLICY "qlvb_profiles_update_policy" ON public.qlvb_profiles
+    FOR UPDATE TO authenticated
+    USING (public.is_qlvb_admin() = true OR id = auth.uid())
+    WITH CHECK (public.is_qlvb_admin() = true OR (id = auth.uid() AND is_admin = public.is_qlvb_admin() AND is_approved = public.is_qlvb_approved()));
+
+DROP POLICY IF EXISTS "qlvb_profiles_delete_policy" ON public.qlvb_profiles;
+CREATE POLICY "qlvb_profiles_delete_policy" ON public.qlvb_profiles
+    FOR DELETE TO authenticated USING (public.is_qlvb_admin() = true);`;
+
+        const supabaseClient = (window.supabase && window.supabase.createClient)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storageKey: 'qlvb_sce_auth_token'
+                }
+            })
+            : null;
+
+        let currentUser = null;
+        let pendingMfaFactorId = null;
+        let allQlvbProfiles = [];
+        let adminUserFilter = 'all';
+
+        let agentOnline = false;
+        let lastLogId = 0;
+        let logHistory = [];
+        let historyRecordsCache = [];
+        let selectedHistoryDoc = null;
+        let settingsLoadedOnce = false;
+        let pollTimer = null;
+
+        window.toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function setLoader(visible, text = 'Đang xử lý...') {
+            const el = document.getElementById('loader');
+            const t = document.getElementById('loaderText');
+            if (t) t.innerText = text;
+            if (el) {
+                el.style.display = visible ? 'flex' : 'none';
+            }
+        }
+
+        function showLoginError(msg) {
+            document.getElementById('loginSuccess').classList.add('hidden');
+            const err = document.getElementById('loginError');
+            err.innerHTML = msg;
+            err.classList.remove('hidden');
+        }
+
+        function showLoginSuccess(msg) {
+            document.getElementById('loginError').classList.add('hidden');
+            const succ = document.getElementById('loginSuccess');
+            succ.innerHTML = msg;
+            succ.classList.remove('hidden');
+        }
+
+        window.switchAuthMode = function(mode) {
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('loginSuccess').classList.add('hidden');
+            if (mode === 'register') {
+                document.getElementById('authFormLogin').classList.add('hidden');
+                document.getElementById('authFormRegister').classList.remove('hidden');
+            } else {
+                document.getElementById('authFormRegister').classList.add('hidden');
+                document.getElementById('authFormLogin').classList.remove('hidden');
+            }
+        };
+
+        window.toggleDarkMode = function() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('darkModeIcon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fas fa-sun text-xs text-yellow-300';
+                localStorage.setItem('qlvb_theme', 'dark');
+            } else {
+                icon.className = 'fas fa-moon text-xs text-yellow-300';
+                localStorage.setItem('qlvb_theme', 'light');
+            }
+        };
+
+        // =====================================================================
+        // 1. XÁC THỰC SUPABASE & ĐỒNG BỘ BẢNG ĐỘC LẬP `qlvb_profiles`
+        // =====================================================================
+        window.syncQlvbProfile = async function(authUser) {
+            if (!supabaseClient || !authUser) return null;
+
+            const defaultName = authUser.user_metadata?.fullname
+                || authUser.user_metadata?.full_name
+                || authUser.user_metadata?.name
+                || (authUser.email ? authUser.email.split('@')[0] : 'Cán bộ SCE');
+
+            // 1. Kiểm tra hồ sơ trong bảng độc lập qlvb_profiles
+            let { data: myProfile, error: selErr } = await supabaseClient
+                .from('qlvb_profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .maybeSingle();
+
+            if (selErr) {
+                // Nếu bảng qlvb_profiles chưa được chạy SQL trên Supabase
+                if (selErr.code === '42P01' || (selErr.message && selErr.message.includes('qlvb_profiles'))) {
+                    throw new Error(
+                        'Bảng độc lập <b>qlvb_profiles</b> chưa được khởi tạo trên Supabase.<br>' +
+                        'Vui lòng bấm nút <b>[Cấu hình DB]</b> ở góc trên bên phải &rarr; Copy SQL và chạy trong Supabase SQL Editor!'
+                    );
+                }
+                throw new Error('Lỗi truy vấn hồ sơ QLVB: ' + selErr.message);
+            }
+
+            // 2. Nếu tài khoản đã có trên auth.users (ví dụ từ /quanlydauthau) nhưng lần đầu vào QLVB
+            if (!myProfile) {
+                const { count } = await supabaseClient
+                    .from('qlvb_profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                let isFirstOrSceAdmin = (count === 0);
+
+                // Kiểm tra xem có phải Admin bên sce_v2_profiles không
+                if (!isFirstOrSceAdmin) {
+                    try {
+                        const { data: sceProf } = await supabaseClient
+                            .from('sce_v2_profiles')
+                            .select('role, is_active')
+                            .eq('id', authUser.id)
+                            .maybeSingle();
+                        if (sceProf && sceProf.role === 'admin' && sceProf.is_active === true) {
+                            isFirstOrSceAdmin = true;
+                        }
+                    } catch (e) {}
+                }
+
+                const newRow = {
+                    id: authUser.id,
+                    email: authUser.email,
+                    fullname: defaultName,
+                    is_admin: isFirstOrSceAdmin,
+                    is_approved: isFirstOrSceAdmin
+                };
+
+                const { data: inserted, error: insErr } = await supabaseClient
+                    .from('qlvb_profiles')
+                    .upsert(newRow)
+                    .select()
+                    .single();
+
+                if (insErr) {
+                    throw new Error('Không thể tạo hồ sơ QLVB lần đầu: ' + insErr.message);
+                }
+                myProfile = inserted;
+            }
+
+            return myProfile;
+        };
+
+        window.completeAuthenticatedSession = async function(authUser) {
+            const profile = await window.syncQlvbProfile(authUser);
+
+            if (!profile || profile.is_approved !== true) {
+                await supabaseClient.auth.signOut();
+                throw new Error(
+                    '⏳ <b>Tài khoản đang chờ Quản trị viên (Admin) phê duyệt!</b><br>' +
+                    'Yêu cầu của bạn đã được ghi nhận vào bảng <code>qlvb_profiles</code>. Vui lòng liên hệ Admin duyệt để bắt đầu sử dụng.'
+                );
+            }
+
+            currentUser = {
+                id: profile.id,
+                email: profile.email,
+                fullname: profile.fullname || authUser.email.split('@')[0],
+                is_admin: profile.is_admin === true,
+                is_approved: profile.is_approved === true
+            };
+
+            document.getElementById('lblUserName').innerText = currentUser.fullname + (currentUser.is_admin ? ' (Admin)' : '');
+            const btnAdmin = document.getElementById('btnAdminApproval');
+            if (currentUser.is_admin) {
+                btnAdmin.classList.remove('hidden');
+                btnAdmin.classList.add('inline-flex');
+                window.fetchAllProfilesForAdmin(true);
+            } else {
+                btnAdmin.classList.add('hidden');
+                btnAdmin.classList.remove('inline-flex');
+            }
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appScreen').classList.remove('hidden');
+
+            // Bắt đầu kết nối Local Agent
+            window.startAgentPolling();
+        };
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
+            if (!email || !password) {
+                showLoginError('Vui lòng nhập đầy đủ Email và Mật khẩu.');
+                return;
+            }
+
+            setLoader(true, 'Đang xác thực tài khoản...');
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    if (error.message.includes('Invalid login credentials')) {
+                        throw new Error('Email hoặc mật khẩu không chính xác.');
+                    }
+                    throw error;
+                }
+
+                // Kiểm tra MFA 2FA nếu tài khoản có bật
+                try {
+                    const { data: aalData } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+                    if (aalData && aalData.nextLevel === 'aal2' && aalData.currentLevel !== 'aal2') {
+                        const { data: factors } = await supabaseClient.auth.mfa.listFactors();
+                        const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+                        if (totpFactor) {
+                            pendingMfaFactorId = totpFactor.id;
+                            setLoader(false);
+                            document.getElementById('mfaVerifyBox').classList.remove('hidden');
+                            document.getElementById('loginMfaCode').focus();
+                            return;
+                        }
+                    }
+                } catch (e) {}
+
+                await window.completeAuthenticatedSession(data.user);
+            } catch (err) {
+                showLoginError(err.message || 'Lỗi đăng nhập.');
+            } finally {
+                setLoader(false);
+            }
+        };
+
+        window.verifyMfaAndProceed = async function() {
+            const code = document.getElementById('loginMfaCode').value.trim();
+            if (!code || code.length !== 6) {
+                showLoginError('Vui lòng nhập đủ 6 chữ số xác thực 2FA.');
+                return;
+            }
+            setLoader(true, 'Đang xác thực mã 2FA...');
+            try {
+                const { data, error } = await supabaseClient.auth.mfa.challengeAndVerify({
+                    factorId: pendingMfaFactorId,
+                    code: code
+                });
+                if (error) throw error;
+                document.getElementById('mfaVerifyBox').classList.add('hidden');
+                const { data: uData } = await supabaseClient.auth.getUser();
+                await window.completeAuthenticatedSession(uData.user);
+            } catch (err) {
+                showLoginError('Mã xác thực 2FA không đúng hoặc đã hết hạn.');
+            } finally {
+                setLoader(false);
+            }
+        };
+
+        window.handleRegisterAuth = async function() {
+            const fullname = document.getElementById('regFullname').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+
+            if (!fullname || !email || !password) {
+                showLoginError('Vui lòng nhập đầy đủ Họ và tên, Email và Mật khẩu.');
+                return;
+            }
+            if (password.length < 6) {
+                showLoginError('Mật khẩu phải có tối thiểu 6 ký tự.');
+                return;
+            }
+
+            setLoader(true, 'Đang khởi tạo tài khoản...');
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: { fullname: fullname }
+                    }
+                });
+                if (error) throw error;
+
+                if (data && data.user) {
+                    try {
+                        const prof = await window.syncQlvbProfile(data.user);
+                        if (prof && prof.is_approved) {
+                            await window.completeAuthenticatedSession(data.user);
+                            window.toast.fire({ icon: 'success', title: 'Chào mừng Admin đầu tiên của hệ thống QLVB!' });
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                await supabaseClient.auth.signOut();
+                window.switchAuthMode('login');
+                showLoginSuccess(
+                    '✅ <b>Đăng ký tài khoản thành công!</b><br>' +
+                    'Tài khoản của bạn đang ở trạng thái <b>Chờ Admin phê duyệt</b>. Sau khi Admin duyệt, bạn có thể đăng nhập ngay.'
+                );
+            } catch (err) {
+                showLoginError(err.message || 'Lỗi khi đăng ký tài khoản.');
+            } finally {
+                setLoader(false);
+            }
+        };
+
+        window.handleGoogleLogin = async function() {
+            try {
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: window.location.origin + window.location.pathname }
+                });
+                if (error) throw error;
+            } catch (err) {
+                showLoginError('Lỗi đăng nhập Google: ' + err.message);
+            }
+        };
+
+        window.handleForgotPassword = async function() {
+            const email = document.getElementById('loginUser').value.trim();
+            if (!email) {
+                showLoginError('Vui lòng nhập Email của bạn vào ô Email đăng nhập trước khi bấm Quên mật khẩu.');
+                return;
+            }
+            setLoader(true, 'Đang gửi email khôi phục...');
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + window.location.pathname
+                });
+                if (error) throw error;
+                showLoginSuccess('Đã gửi đường dẫn đặt lại mật khẩu vào hòm thư: ' + escapeHtml(email));
+            } catch (err) {
+                showLoginError('Không thể gửi yêu cầu: ' + err.message);
+            } finally {
+                setLoader(false);
+            }
+        };
+
+        window.handleLogout = async function() {
+            if (pollTimer) clearInterval(pollTimer);
+            await supabaseClient.auth.signOut();
+            currentUser = null;
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        };
+
+        window.openProfileModal = async function() {
+            if (!currentUser) return;
+            const { value: formValues } = await Swal.fire({
+                title: 'Thông tin Tài khoản QLVB',
+                html: `
+                    <div class="text-left space-y-3 text-sm">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500">Email đăng nhập:</label>
+                            <input type="text" disabled value="${escapeHtml(currentUser.email)}" class="w-full bg-slate-100 border rounded-lg p-2 text-xs font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500">Họ và tên hiển thị:</label>
+                            <input type="text" id="swalFullname" value="${escapeHtml(currentUser.fullname)}" class="w-full border rounded-lg p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500">Đổi mật khẩu mới (Bỏ trống nếu giữ nguyên):</label>
+                            <input type="password" id="swalNewPass" placeholder="Nhập mật khẩu mới..." class="w-full border rounded-lg p-2 text-sm">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Lưu thay đổi',
+                cancelButtonText: 'Đóng',
+                preConfirm: () => ({
+                    fullname: document.getElementById('swalFullname').value.trim(),
+                    newPass: document.getElementById('swalNewPass').value.trim()
+                })
+            });
+
+            if (formValues) {
+                setLoader(true, 'Đang cập nhật tài khoản...');
+                try {
+                    if (formValues.fullname && formValues.fullname !== currentUser.fullname) {
+                        await supabaseClient.from('qlvb_profiles').update({ fullname: formValues.fullname, updated_at: new Date().toISOString() }).eq('id', currentUser.id);
+                        currentUser.fullname = formValues.fullname;
+                        document.getElementById('lblUserName').innerText = currentUser.fullname + (currentUser.is_admin ? ' (Admin)' : '');
+                    }
+                    if (formValues.newPass) {
+                        if (formValues.newPass.length < 6) throw new Error('Mật khẩu mới phải từ 6 ký tự trở lên.');
+                        const { error } = await supabaseClient.auth.updateUser({ password: formValues.newPass });
+                        if (error) throw error;
+                    }
+                    window.toast.fire({ icon: 'success', title: 'Đã cập nhật thông tin tài khoản!' });
+                } catch (e) {
+                    Swal.fire('Lỗi', e.message, 'error');
+                } finally {
+                    setLoader(false);
+                }
+            }
+        };
+
+        // =====================================================================
+        // 2. QUẢN LÝ & PHÊ DUYỆT TÀI KHOẢN DÀNH CHO ADMIN (`qlvb_profiles`)
+        // =====================================================================
+        window.fetchAllProfilesForAdmin = async function(silent = false) {
+            if (!currentUser || !currentUser.is_admin) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('qlvb_profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                allQlvbProfiles = data || [];
+                const pendingCnt = allQlvbProfiles.filter(u => !u.is_approved).length;
+                const badge = document.getElementById('badgePendingUsers');
+                if (pendingCnt > 0) {
+                    badge.innerText = pendingCnt;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+                window.renderAdminUsersTable();
+            } catch (e) {
+                if (!silent) Swal.fire('Lỗi tải danh sách tài khoản', e.message, 'error');
+            }
+        };
+
+        window.openAdminAccountsModal = function() {
+            if (!currentUser || !currentUser.is_admin) return;
+            document.getElementById('adminAccountsModal').classList.remove('hidden');
+            document.getElementById('adminAccountsModal').classList.add('flex');
+            window.fetchAllProfilesForAdmin();
+        };
+
+        window.closeAdminAccountsModal = function() {
+            document.getElementById('adminAccountsModal').classList.add('hidden');
+            document.getElementById('adminAccountsModal').classList.remove('flex');
+        };
+
+        window.setAdminUserFilter = function(mode) {
+            adminUserFilter = mode;
+            ['all', 'pending', 'approved'].forEach(k => {
+                const b = document.getElementById('btnFilterUsers_' + k);
+                if (k === mode) {
+                    b.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white';
+                } else {
+                    b.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600';
+                }
+            });
+            window.renderAdminUsersTable();
+        };
+
+        window.renderAdminUsersTable = function() {
+            const tbody = document.getElementById('tbodyAdminUsers');
+            if (!tbody) return;
+            const kw = (document.getElementById('txtSearchAdminUsers')?.value || '').trim().toLowerCase();
+
+            const filtered = allQlvbProfiles.filter(u => {
+                if (adminUserFilter === 'pending' && u.is_approved) return false;
+                if (adminUserFilter === 'approved' && !u.is_approved) return false;
+                if (kw && !(u.fullname || '').toLowerCase().includes(kw) && !(u.email || '').toLowerCase().includes(kw)) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 italic">Không có tài khoản nào trong mục này.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(u => {
+                const isMe = currentUser && u.id === currentUser.id;
+                const statusBadge = u.is_approved
+                    ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">✅ Đã duyệt (Được phép dùng)</span>`
+                    : `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 animate-pulse">⏳ Chờ Admin duyệt</span>`;
+
+                const adminBadge = u.is_admin
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">👑 Admin</span>`
+                    : `<span class="text-xs text-slate-400">Thành viên</span>`;
+
+                const approveBtn = !u.is_approved
+                    ? `<button onclick="window.toggleApproveUser('${u.id}', true)" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">✔ Duyệt ngay</button>`
+                    : (!isMe ? `<button onclick="window.toggleApproveUser('${u.id}', false)" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition">🔒 Khóa</button>` : '');
+
+                const toggleAdminBtn = !isMe
+                    ? `<button onclick="window.toggleAdminRole('${u.id}', ${!u.is_admin})" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold">${u.is_admin ? 'Gỡ Admin' : 'Cấp Admin'}</button>`
+                    : '';
+
+                const delBtn = !isMe
+                    ? `<button onclick="window.deleteQlvbUser('${u.id}', '${escapeHtml(u.email)}')" class="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-600 text-red-600 hover:text-white text-xs font-semibold transition"><i class="fas fa-trash"></i></button>`
+                    : `<span class="text-[11px] text-slate-400 italic">Tài khoản của bạn</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                        <td class="p-2.5 font-bold text-slate-800 dark:text-slate-100">${escapeHtml(u.fullname)}</td>
+                        <td class="p-2.5 font-mono text-xs text-slate-600 dark:text-slate-300">${escapeHtml(u.email)}</td>
+                        <td class="p-2.5 text-center">${statusBadge}</td>
+                        <td class="p-2.5 text-center">${adminBadge}</td>
+                        <td class="p-2.5 text-right space-x-1">${approveBtn} ${toggleAdminBtn} ${delBtn}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.toggleApproveUser = async function(uid, approved) {
+            try {
+                const { error } = await supabaseClient
+                    .from('qlvb_profiles')
+                    .update({ is_approved: approved, updated_at: new Date().toISOString() })
+                    .eq('id', uid);
+                if (error) throw error;
+                window.toast.fire({
+                    icon: 'success',
+                    title: approved ? 'Đã phê duyệt tài khoản thành công!' : 'Đã khóa quyền truy cập tài khoản.'
+                });
+                window.fetchAllProfilesForAdmin(true);
+            } catch (e) {
+                Swal.fire('Lỗi', e.message, 'error');
+            }
+        };
+
+        window.toggleAdminRole = async function(uid, makeAdmin) {
+            try {
+                const { error } = await supabaseClient
+                    .from('qlvb_profiles')
+                    .update({ is_admin: makeAdmin, is_approved: true, updated_at: new Date().toISOString() })
+                    .eq('id', uid);
+                if (error) throw error;
+                window.toast.fire({ icon: 'success', title: 'Đã cập nhật quyền Quản trị!' });
+                window.fetchAllProfilesForAdmin(true);
+            } catch (e) {
+                Swal.fire('Lỗi', e.message, 'error');
+            }
+        };
+
+        window.deleteQlvbUser = async function(uid, email) {
+            const res = await Swal.fire({
+                title: 'Xóa tài khoản QLVB?',
+                text: `Bạn có chắc muốn xóa hồ sơ [${email}] khỏi danh sách truy cập QLVB?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
+            if (!res.isConfirmed) return;
+            try {
+                const { error } = await supabaseClient.from('qlvb_profiles').delete().eq('id', uid);
+                if (error) throw error;
+                window.toast.fire({ icon: 'success', title: 'Đã xóa hồ sơ tài khoản.' });
+                window.fetchAllProfilesForAdmin(true);
+            } catch (e) {
+                Swal.fire('Lỗi', e.message, 'error');
+            }
+        };
+
+        // =====================================================================
+        // 3. CẤU HÌNH DB SUPABASE & LOCAL AGENT BRIDGE
+        // =====================================================================
+        window.openSupabaseSetupModal = function() {
+            document.getElementById('cfgSupabaseUrl').value = SUPABASE_URL;
+            document.getElementById('cfgSupabaseKey').value = SUPABASE_ANON_KEY;
+            document.getElementById('qlvbSqlPreviewTextarea').value = QLVB_SQL_SCHEMA_TEXT;
+            document.getElementById('supabaseSetupModal').classList.remove('hidden');
+            document.getElementById('supabaseSetupModal').classList.add('flex');
+        };
+
+        window.copyQlvbSqlSchema = function() {
+            navigator.clipboard.writeText(QLVB_SQL_SCHEMA_TEXT).then(() => {
+                window.toast.fire({ icon: 'success', title: 'Đã copy kịch bản SQL bảng qlvb_profiles!' });
+            });
+        };
+
+        window.saveSupabaseConfig = function() {
+            const url = document.getElementById('cfgSupabaseUrl').value.trim();
+            const key = document.getElementById('cfgSupabaseKey').value.trim();
+            if (!url || !key) return Swal.fire('Lỗi', 'Vui lòng nhập đầy đủ URL và Key.', 'warning');
+            localStorage.setItem('qlvb_supabase_config', JSON.stringify({ url, key }));
+            window.location.reload();
+        };
+
+        window.resetDefaultSupabaseConfig = function() {
+            localStorage.removeItem('qlvb_supabase_config');
+            window.location.reload();
+        };
+
+        window.openAgentHelpModal = function() {
+            document.getElementById('txtAgentUrlConfig').value = AGENT_BASE_URL;
+            document.getElementById('agentHelpModal').classList.remove('hidden');
+            document.getElementById('agentHelpModal').classList.add('flex');
+        };
+
+        window.saveAgentUrlConfig = function() {
+            const val = document.getElementById('txtAgentUrlConfig').value.trim().replace(/\/+$/, '');
+            if (val) {
+                AGENT_BASE_URL = val;
+                localStorage.setItem('qlvb_local_agent_url', AGENT_BASE_URL);
+                document.getElementById('agentHelpModal').classList.add('hidden');
+                window.pollAgentStatus();
+                window.toast.fire({ icon: 'info', title: 'Đã cập nhật địa chỉ kết nối Local Agent!' });
+            }
+        };
+
+        async function callAgentApi(endpoint, method = 'GET', body = null) {
+            const opts = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) opts.body = JSON.stringify(body);
+            const resp = await fetch(`${AGENT_BASE_URL}${endpoint}`, opts);
+            return await resp.json();
+        }
+
+        // =====================================================================
+        // 4. ĐỒNG BỘ TRẠNG THÁI THỜI GIAN THỰC VỚI LOCAL AGENT TRÊN MÁY TÍNH
+        // =====================================================================
+        window.startAgentPolling = function() {
+            window.pollAgentStatus();
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(window.pollAgentStatus, 1200);
+        };
+
+        window.pollAgentStatus = async function() {
+            try {
+                const data = await callAgentApi(`/api/status?since_id=${lastLogId}`, 'GET');
+                if (!data || !data.ok) throw new Error('Invalid response');
+
+                agentOnline = true;
+                document.getElementById('bannerAgentOffline').classList.add('hidden');
+
+                const badgeAgent = document.getElementById('badgeLocalAgent');
+                const dotAgent = document.getElementById('dotLocalAgent');
+                const txtAgent = document.getElementById('txtLocalAgent');
+                badgeAgent.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 hover:bg-emerald-500/30 transition';
+                dotAgent.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                txtAgent.innerText = 'Máy trạm Local: Đã kết nối';
+
+                // Đồng bộ cài đặt lần đầu
+                if (!settingsLoadedOnce && data.settings) {
+                    settingsLoadedOnce = true;
+                    const s = data.settings;
+                    if (s.base_dir) {
+                        document.getElementById('txtSingleOutDir').value = s.base_dir;
+                        document.getElementById('txtBatchOutDir').value = s.base_dir;
+                    }
+                    if (s.excel_path) {
+                        document.getElementById('txtBatchExcelPath').value = s.excel_path;
+                    }
+                    if (s.api_key) document.getElementById('txtSetApiKey').value = s.api_key;
+                    if (s.model) document.getElementById('cboSetModel').value = s.model;
+                    if (s.mode) document.getElementById('cboSetAiMode').value = s.mode;
+                    document.getElementById('chkSetRequireDate').checked = s.require_doc_date !== false;
+                    const rad = document.querySelector(`input[name="radBrowserChannel"][value="${s.channel || 'chrome'}"]`);
+                    if (rad) rad.checked = true;
+                }
+
+                // Cập nhật trạng thái trình duyệt QLVB
+                const br = data.browser || {};
+                const btnBr = document.getElementById('btnTopBrowser');
+                const txtBr = document.getElementById('txtTopBrowser');
+                if (!br.started) {
+                    btnBr.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5';
+                    txtBr.innerText = 'Mở QLVB (Đăng nhập)';
+                } else if (br.is_hidden) {
+                    btnBr.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5';
+                    txtBr.innerText = '🔒 QLVB: Chạy ngầm (Hiện/Ẩn)';
+                } else {
+                    btnBr.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-1.5';
+                    txtBr.innerText = '👁️ QLVB: Đang hiện (Bấm để ẩn)';
+                }
+
+                // Cập nhật huy hiệu AI
+                if (data.ai_badge) {
+                    document.getElementById('badgeTopAi').innerText = data.ai_badge.text || '🤖 AI';
+                }
+
+                // Cập nhật trạng thái và tiến trình dưới đáy
+                const st = data.state || {};
+                window.updateBottomStatusBar(st);
+                window.updateSingleStepperUI(st.single_step, st.single_count, st.is_running);
+                window.updateBatchStepperUI(st.batch_step, st.batch_count, st.is_running);
+
+                // Cập nhật Log mới
+                if (Array.isArray(data.logs) && data.logs.length > 0) {
+                    data.logs.forEach(item => {
+                        logHistory.push(item);
+                        if (item.id > lastLogId) lastLogId = item.id;
+                    });
+                    if (logHistory.length > 2000) logHistory = logHistory.slice(-1500);
+                    window.renderLogTerminal();
+                }
+                document.getElementById('badgeLogCount').innerText = logHistory.length;
+                document.getElementById('lblBottomLogCount').innerText = logHistory.length;
+
+            } catch (e) {
+                agentOnline = false;
+                document.getElementById('bannerAgentOffline').classList.remove('hidden');
+                const badgeAgent = document.getElementById('badgeLocalAgent');
+                const dotAgent = document.getElementById('dotLocalAgent');
+                const txtAgent = document.getElementById('txtLocalAgent');
+                badgeAgent.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-red-500/20 text-red-200 border border-red-400/40 hover:bg-red-500/30 transition';
+                dotAgent.className = 'w-2 h-2 rounded-full bg-red-400 animate-ping';
+                txtAgent.innerText = 'Máy trạm: Chưa bật Agent';
+            }
+        };
+
+        function ensureAgentConnected() {
+            if (!agentOnline) {
+                window.openAgentHelpModal();
+                return false;
+            }
+            return true;
+        }
+
+        window.updateBottomStatusBar = function(st) {
+            const badge = document.getElementById('badgeBottomStatus');
+            const msg = document.getElementById('lblBottomStatusMsg');
+            const bar = document.getElementById('bottomProgressBar');
+            const popBadge = document.getElementById('badgePopupLogState');
+
+            msg.innerText = st.status_text || 'Sẵn sàng.';
+            const pct = st.progress_total > 0 ? Math.min(100, Math.round((st.progress_cur / st.progress_total) * 100)) : 0;
+            bar.style.width = (st.is_running ? Math.max(8, pct) : (st.status_state === 'done' ? 100 : 0)) + '%';
+
+            let bTxt = '● SẴN SÀNG';
+            let bCls = 'shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+            if (st.status_state === 'done') {
+                bTxt = '✅ ĐÃ XONG';
+                bCls = 'shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+            } else if (st.status_state === 'processing') {
+                bTxt = '⏳ ĐANG XỬ LÝ...';
+                bCls = 'shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+            } else if (st.status_state === 'error') {
+                bTxt = '⚠️ CÓ LỖI';
+                bCls = 'shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+            } else if (st.status_state === 'stopped') {
+                bTxt = '⏹ ĐÃ DỪNG';
+                bCls = 'shrink-0 px-2.5 py-0.5 rounded-md text-xs font-extrabold bg-red-100 text-red-800';
+            }
+            badge.className = bCls;
+            badge.innerText = bTxt;
+            if (popBadge) popBadge.innerText = bTxt;
+        };
+
+        // =====================================================================
+        // 5. ĐIỀU HƯỚNG TABS & CÁC HÀNH ĐỘNG NGHIỆP VỤ
+        // =====================================================================
+        window.switchTab = function(tabKey) {
+            ['single', 'batch', 'history', 'settings'].forEach(k => {
+                const page = document.getElementById('tabPage_' + k);
+                const btn = document.getElementById('tabBtn_' + k);
+                if (k === tabKey) {
+                    page.classList.remove('hidden');
+                    btn.className = 'flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-sm';
+                } else {
+                    page.classList.add('hidden');
+                    btn.className = 'flex-1 min-w-[180px] py-2 px-4 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                }
+            });
+            if (tabKey === 'history' && agentOnline) {
+                window.loadHistoryRecords();
+            }
+            if (tabKey === 'batch' && agentOnline) {
+                window.fetchLoadedProjects();
+            }
+        };
+
+        window.toggleSingleAdv = function() {
+            const box = document.getElementById('boxSingleAdv');
+            const btn = document.getElementById('btnToggleSingleAdv');
+            if (box.classList.contains('hidden')) {
+                box.classList.remove('hidden');
+                btn.innerText = '⚙️ Thu gọn nâng cao ▴';
+            } else {
+                box.classList.add('hidden');
+                btn.innerText = '⚙️ Tìm kiếm nâng cao ▾';
+            }
+            window.updateSingleAdvBadge();
+        };
+
+        window.updateSingleAdvBadge = function() {
+            const has = Boolean(
+                document.getElementById('txtSingleNumber').value.trim() ||
+                document.getElementById('txtSingleAgency').value.trim() ||
+                document.getElementById('txtSingleFrom').value.trim() ||
+                document.getElementById('txtSingleTo').value.trim()
+            );
+            const lbl = document.getElementById('lblAdvStatus');
+            if (has) {
+                lbl.innerText = '● Bộ lọc nâng cao: ĐANG ÁP DỤNG';
+                lbl.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400';
+            } else {
+                lbl.innerText = 'Bộ lọc nâng cao: Trống';
+                lbl.className = 'text-xs font-medium text-slate-400';
+            }
+        };
+
+        window.clearSingleSearch = function() {
+            document.getElementById('txtSingleKeyword').value = '';
+            document.getElementById('txtSingleNumber').value = '';
+            document.getElementById('txtSingleAgency').value = '';
+            document.getElementById('txtSingleFrom').value = '';
+            document.getElementById('txtSingleTo').value = '';
+            window.updateSingleAdvBadge();
+        };
+
+        window.updateSingleStepperUI = function(step, count, isRunning) {
+            document.getElementById('btnSingleStop').disabled = !isRunning;
+            const c1 = document.getElementById('cardSingleStep1');
+            const c2 = document.getElementById('cardSingleStep2');
+            const c3 = document.getElementById('cardSingleStep3');
+            const s1 = document.getElementById('badgeSingleStep1State');
+            const s2 = document.getElementById('badgeSingleStep2State');
+            const s3 = document.getElementById('badgeSingleStep3State');
+            const t2 = document.getElementById('titleSingleStep2');
+
+            const activeCls = 'step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-blue-600 bg-blue-50/70 dark:bg-blue-950/40';
+            const doneCls = 'step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-emerald-600 bg-emerald-50/70 dark:bg-emerald-950/40';
+            const procCls = 'step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-amber-500 bg-amber-50/70 dark:bg-amber-950/40';
+            const pendCls = 'step-card-transition cursor-pointer rounded-xl p-3.5 border-2 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50';
+
+            if (step === 1) {
+                c1.className = activeCls; s1.innerText = '👉 BƯỚC NÀY';
+                c2.className = pendCls; s2.innerText = 'Chờ Bước 1';
+                c3.className = pendCls; s3.innerText = 'Chờ Bước 2';
+            } else if (step === 2) {
+                c1.className = doneCls; s1.innerText = '✅ ĐÃ KẾT NỐI';
+                c2.className = activeCls; s2.innerText = '👉 BƯỚC TIẾP';
+                c3.className = pendCls; s3.innerText = 'Chờ Bước 2';
+            } else if (step === '2_checking') {
+                c1.className = doneCls; s1.innerText = '✅ ĐÃ KẾT NỐI';
+                c2.className = procCls; s2.innerText = '⏳ ĐANG ĐẾM...';
+                c3.className = pendCls; s3.innerText = 'Chờ Bước 2';
+            } else if (step === 3) {
+                c1.className = doneCls; s1.innerText = '✅ ĐÃ KẾT NỐI';
+                c2.className = doneCls; s2.innerText = `✅ ${count || 0} VB`;
+                t2.innerText = `🔍 Bước 2: Tìm thấy ${count || 0} VB`;
+                c3.className = activeCls; s3.innerText = '👉 BẤM ĐỂ TẢI';
+            } else if (step === '3_downloading') {
+                c1.className = doneCls;
+                c2.className = doneCls;
+                c3.className = procCls; s3.innerText = '⏳ ĐANG TẢI...';
+            } else if (step === '3_done') {
+                c1.className = doneCls;
+                c2.className = doneCls;
+                c3.className = doneCls; s3.innerText = '✅ HOÀN TẤT';
+            }
+        };
+
+        window.updateBatchStepperUI = function(step, count, isRunning) {
+            document.getElementById('btnBatchStop').disabled = !isRunning;
+            const s1 = document.getElementById('badgeBatchStep1State');
+            const s2 = document.getElementById('badgeBatchStep2State');
+            const s3 = document.getElementById('badgeBatchStep3State');
+            if (step === 1) {
+                s1.innerText = '👉 BƯỚC NÀY'; s2.innerText = 'Chờ Bước 1'; s3.innerText = 'Chờ Bước 2';
+            } else if (step === 2) {
+                s1.innerText = '✅ ĐÃ CHỌN'; s2.innerText = '👉 BƯỚC TIẾP'; s3.innerText = 'Chờ Bước 2';
+            } else if (step === 3) {
+                s1.innerText = '✅ ĐÃ CHỌN'; s2.innerText = `✅ ${count || 0} DỰ ÁN`; s3.innerText = '👉 BẤM ĐỂ QUÉT';
+            } else if (step === '3_scanning') {
+                s3.innerText = '⏳ ĐANG QUÉT...';
+            } else if (step === '3_done') {
+                s3.innerText = '✅ HOÀN TẤT';
+            }
+        };
+
+        window.triggerOpenBrowser = async function() {
+            if (!ensureAgentConnected()) return;
+            await callAgentApi('/api/browser/open', 'POST');
+            window.pollAgentStatus();
+        };
+
+        window.triggerSingleCheckCount = async function() {
+            if (!ensureAgentConnected()) return;
+            const payload = {
+                keyword: document.getElementById('txtSingleKeyword').value.trim(),
+                number: document.getElementById('txtSingleNumber').value.trim(),
+                agency: document.getElementById('txtSingleAgency').value.trim(),
+                from_date: document.getElementById('txtSingleFrom').value.trim(),
+                to_date: document.getElementById('txtSingleTo').value.trim()
+            };
+            if (!payload.keyword && !payload.number && !payload.agency && !payload.from_date && !payload.to_date) {
+                return Swal.fire('Thiếu tiêu chí', 'Vui lòng nhập ít nhất một điều kiện tìm kiếm (Trích yếu, Số ký hiệu, Cơ quan, hoặc Thời gian).', 'warning');
+            }
+            await callAgentApi('/api/single/check', 'POST', payload);
+            window.pollAgentStatus();
+        };
+
+        window.triggerSingleDownload = async function() {
+            if (!ensureAgentConnected()) return;
+            const payload = {
+                keyword: document.getElementById('txtSingleKeyword').value.trim(),
+                number: document.getElementById('txtSingleNumber').value.trim(),
+                agency: document.getElementById('txtSingleAgency').value.trim(),
+                from_date: document.getElementById('txtSingleFrom').value.trim(),
+                to_date: document.getElementById('txtSingleTo').value.trim(),
+                out_dir: document.getElementById('txtSingleOutDir').value.trim(),
+                naming_format: document.getElementById('cboSingleNaming').value,
+                use_ai: document.getElementById('chkSingleUseAi').checked
+            };
+            if (!payload.keyword && !payload.number && !payload.agency && !payload.from_date && !payload.to_date) {
+                return Swal.fire('Thiếu tiêu chí', 'Vui lòng nhập ít nhất một điều kiện tìm kiếm.', 'warning');
+            }
+            const res = await callAgentApi('/api/single/download', 'POST', payload);
+            if (!res.ok) Swal.fire('Thông báo', res.message || res.error, 'warning');
+            window.pollAgentStatus();
+        };
+
+        window.resetSingleFlow = async function() {
+            window.clearSingleSearch();
+            if (agentOnline) await callAgentApi('/api/single/reset', 'POST');
+        };
+
+        window.triggerStopTask = async function() {
+            if (!ensureAgentConnected()) return;
+            await callAgentApi('/api/task/stop', 'POST');
+        };
+
+        window.chooseLocalFolder = async function(inputId) {
+            if (!ensureAgentConnected()) return;
+            const cur = document.getElementById(inputId).value.trim();
+            const res = await callAgentApi('/api/local/choose-folder', 'POST', { current_dir: cur });
+            if (res.ok && res.path) {
+                document.getElementById('txtSingleOutDir').value = res.path;
+                document.getElementById('txtBatchOutDir').value = res.path;
+                window.toast.fire({ icon: 'success', title: 'Đã chọn thư mục: ' + res.path });
+            }
+        };
+
+        window.openLocalPath = async function(pathStr, mode = 'file') {
+            if (!ensureAgentConnected()) return;
+            const res = await callAgentApi('/api/local/open-path', 'POST', { path: pathStr, mode: mode });
+            if (!res.ok) {
+                Swal.fire('Thông báo', res.error || 'Không mở được đường dẫn.', 'info');
+            }
+        };
+
+        // TAB 2: DỰ ÁN EXCEL
+        window.renderProjectsTable = function(projects) {
+            const tbody = document.getElementById('tbodyBatchProjects');
+            const kpi = document.getElementById('lblBatchKpi');
+            if (!Array.isArray(projects) || projects.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 italic">Chưa có dự án nào được nạp.</td></tr>`;
+                kpi.innerText = '📊 Danh mục: 0 dự án';
+                return;
+            }
+            const activeCnt = projects.filter(p => p.active).length;
+            kpi.innerText = `📊 Tổng số: ${projects.length} dự án | 🟢 Sẵn sàng quét: ${activeCnt} | ⚪ Bỏ qua: ${projects.length - activeCnt}`;
+            tbody.innerHTML = projects.map(p => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                    <td class="p-2.5 text-center font-bold text-blue-700 dark:text-blue-400">${escapeHtml(p.project_id)}</td>
+                    <td class="p-2.5 font-semibold">${escapeHtml(p.name)}</td>
+                    <td class="p-2.5 text-xs text-slate-600 dark:text-slate-300">${escapeHtml((p.keywords || []).join('; '))}</td>
+                    <td class="p-2.5 text-center text-xs">${escapeHtml(p.from_date || '-')}</td>
+                    <td class="p-2.5 text-center text-xs">${escapeHtml(p.to_date || '-')}</td>
+                    <td class="p-2.5 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${p.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">
+                            ${p.active ? 'Sẵn sàng' : 'Tắt'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        window.fetchLoadedProjects = async function() {
+            if (!agentOnline) return;
+            const res = await callAgentApi('/api/projects', 'GET');
+            if (res.ok && Array.isArray(res.projects) && res.projects.length > 0) {
+                window.renderProjectsTable(res.projects);
+            }
+        };
+
+        window.chooseLocalExcel = async function() {
+            if (!ensureAgentConnected()) return;
+            const res = await callAgentApi('/api/local/choose-excel', 'POST');
+            if (res.ok) {
+                document.getElementById('txtBatchExcelPath').value = res.excel_path || '';
+                window.renderProjectsTable(res.projects || []);
+                window.toast.fire({ icon: 'success', title: `Đã nạp ${(res.projects || []).length} dự án!` });
+            }
+        };
+
+        window.uploadBatchExcelFile = function(inputEl) {
+            if (!ensureAgentConnected()) return;
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const base64Data = evt.target.result.split(',')[1];
+                const res = await callAgentApi('/api/batch/load', 'POST', {
+                    filename: file.name,
+                    file_base64: base64Data
+                });
+                if (res.ok) {
+                    document.getElementById('txtBatchExcelPath').value = res.excel_path || file.name;
+                    window.renderProjectsTable(res.projects || []);
+                    window.toast.fire({ icon: 'success', title: `Đã tải lên & nạp ${(res.projects || []).length} dự án!` });
+                } else {
+                    Swal.fire('Lỗi đọc file Excel', res.error || 'Không đọc được file.', 'error');
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.createSampleExcel = async function() {
+            if (!ensureAgentConnected()) return;
+            const res = await callAgentApi('/api/batch/sample', 'POST');
+            if (res.ok) {
+                document.getElementById('txtBatchExcelPath').value = res.excel_path || '';
+                window.renderProjectsTable(res.projects || []);
+                Swal.fire('Thành công', `Đã tạo và nạp file mẫu tại:\n${res.excel_path}`, 'success');
+            }
+        };
+
+        window.loadBatchProjects = async function() {
+            if (!ensureAgentConnected()) return;
+            const path = document.getElementById('txtBatchExcelPath').value.trim();
+            const res = await callAgentApi('/api/batch/load', 'POST', { excel_path: path });
+            if (res.ok) {
+                window.renderProjectsTable(res.projects || []);
+                window.toast.fire({ icon: 'success', title: `Đã nạp ${(res.projects || []).length} dự án!` });
+            } else {
+                Swal.fire('Cảnh báo', res.error || 'Không tìm thấy file Excel.', 'warning');
+            }
+        };
+
+        window.startBatchScan = async function() {
+            if (!ensureAgentConnected()) return;
+            const outDir = document.getElementById('txtBatchOutDir').value.trim();
+            const res = await callAgentApi('/api/batch/start', 'POST', { out_dir: outDir });
+            if (!res.ok) {
+                Swal.fire('Thông báo', res.message || res.error, 'warning');
+            }
+            window.pollAgentStatus();
+        };
+
+        window.resetBatchFlow = async function() {
+            if (!ensureAgentConnected()) return;
+            await callAgentApi('/api/batch/reset', 'POST');
+            window.renderProjectsTable([]);
+        };
+
+        // TAB 3: LỊCH SỬ KHO VĂN BẢN
+        window.loadHistoryRecords = async function() {
+            if (!ensureAgentConnected()) return;
+            const kw = document.getElementById('txtHistoryFilter').value.trim();
+            const outDir = document.getElementById('txtSingleOutDir').value.trim();
+            const res = await callAgentApi('/api/history/list', 'POST', { out_dir: outDir, keyword: kw, limit: 500 });
+            if (res.ok) {
+                historyRecordsCache = res.records || [];
+                window.renderHistoryTable(historyRecordsCache);
+            }
+        };
+
+        window.filterHistoryClient = function() {
+            const kw = document.getElementById('txtHistoryFilter').value.trim().toLowerCase();
+            if (!kw) {
+                window.renderHistoryTable(historyRecordsCache);
+                return;
+            }
+            const filtered = historyRecordsCache.filter(r =>
+                (r.so_ky_hieu || '').toLowerCase().includes(kw) ||
+                (r.trich_yeu_goc || '').toLowerCase().includes(kw) ||
+                (r.tom_tat_ai || '').toLowerCase().includes(kw) ||
+                (r.co_quan_ban_hanh || '').toLowerCase().includes(kw) ||
+                (r.projects || '').toLowerCase().includes(kw)
+            );
+            window.renderHistoryTable(filtered);
+        };
+
+        window.renderHistoryTable = function(list) {
+            const tbody = document.getElementById('tbodyHistory');
+            document.getElementById('lblHistoryCount').innerText = `Tìm thấy: ${list.length} văn bản`;
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Chưa có văn bản nào trong kho tại thư mục hiện tại.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map((r, idx) => `
+                <tr onclick="window.selectHistoryRow(${idx})" ondblclick="window.selectHistoryRow(${idx}); window.openSelectedHistoryFile();" class="cursor-pointer hover:bg-blue-50/70 dark:hover:bg-slate-700/60 transition">
+                    <td class="p-2.5 font-bold text-blue-700 dark:text-blue-400">${escapeHtml(r.so_ky_hieu || '(Chưa có số)')}</td>
+                    <td class="p-2.5 text-center">${escapeHtml(r.ngay_ban_hanh || '')}</td>
+                    <td class="p-2.5">${escapeHtml(r.loai_van_ban || '')}</td>
+                    <td class="p-2.5">${escapeHtml(r.co_quan_ban_hanh || '')}</td>
+                    <td class="p-2.5 text-slate-600 dark:text-slate-300">${escapeHtml(r.projects || '')}</td>
+                    <td class="p-2.5 font-mono text-[11px] truncate max-w-[220px]">${escapeHtml(r.main_file_name || '')}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="event.stopPropagation(); window.selectHistoryRow(${idx}); window.openSelectedHistoryFile();" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold hover:bg-blue-200">Mở PDF</button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+
+        window.selectHistoryRow = function(idx) {
+            const r = historyRecordsCache[idx];
+            if (!r) return;
+            selectedHistoryDoc = r;
+            document.getElementById('lblHistoryDetailTitle').innerText =
+                `📝 [${(r.loai_van_ban || 'VĂN BẢN').toUpperCase()}] Số: ${r.so_ky_hieu || '(Chưa có số)'} | Ngày BH: ${r.ngay_ban_hanh || '-'} | Cơ quan: ${r.co_quan_ban_hanh || '-'}`;
+            document.getElementById('txtHistoryDetailBody').innerText =
+                `📌 DỰ ÁN LIÊN QUAN: ${r.projects || '-'}\n` +
+                `📄 TẬP TIN CHÍNH: ${r.main_file_name || '-'}\n` +
+                `--------------------------------------------------------------------------------\n` +
+                `✨ TÓM TẮT AI: ${r.tom_tat_ai || '-'}\n` +
+                `📝 TRÍCH YẾU GỐC: ${r.trich_yeu_goc || '-'}`;
+            document.getElementById('lblHistoryDetailPath').innerText = `Đường dẫn file: ${r.main_file_path || '-'}`;
+        };
+
+        window.openSelectedHistoryFile = function() {
+            if (!selectedHistoryDoc || !selectedHistoryDoc.main_file_path) {
+                return Swal.fire('Thông báo', 'Vui lòng chọn một văn bản trong danh sách trước.', 'info');
+            }
+            window.openLocalPath(selectedHistoryDoc.main_file_path, 'file');
+        };
+
+        window.openSelectedHistoryFolder = function() {
+            if (!selectedHistoryDoc || !selectedHistoryDoc.main_file_path) {
+                return Swal.fire('Thông báo', 'Vui lòng chọn một văn bản trong danh sách trước.', 'info');
+            }
+            window.openLocalPath(selectedHistoryDoc.main_file_path, 'parent');
+        };
+
+        window.copyHistorySummary = function() {
+            const txt = document.getElementById('txtHistoryDetailBody').innerText;
+            if (!selectedHistoryDoc) return;
+            navigator.clipboard.writeText(txt).then(() => {
+                window.toast.fire({ icon: 'success', title: 'Đã sao chép nội dung tóm tắt!' });
+            });
+        };
+
+        // TAB 4: CÀI ĐẶT
+        window.testGeminiConnection = async function() {
+            if (!ensureAgentConnected()) return;
+            const key = document.getElementById('txtSetApiKey').value.trim();
+            const model = document.getElementById('cboSetModel').value;
+            if (!key) return Swal.fire('Cảnh báo', 'Vui lòng nhập Gemini API Key để kiểm tra.', 'warning');
+            const btn = document.getElementById('btnTestGemini');
+            btn.disabled = true;
+            btn.innerText = '⏳ Đang kiểm tra...';
+            try {
+                const res = await callAgentApi('/api/settings/test-gemini', 'POST', { api_key: key, model: model });
+                if (res.ok) {
+                    document.getElementById('cboSetModel').value = res.chosen_model || model;
+                    Swal.fire('Kết nối AI thành công!', `Mô hình hoạt động: ${res.chosen_model}\nPhản hồi thử nghiệm: "${res.sample_output}"`, 'success');
+                } else {
+                    Swal.fire('Lỗi kết nối Gemini API', res.error || 'Không thể kết nối.', 'error');
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '⚡ Kiểm tra kết nối API';
+            }
+        };
+
+        window.saveAllSettings = async function() {
+            if (!ensureAgentConnected()) return;
+            const chEl = document.querySelector('input[name="radBrowserChannel"]:checked');
+            const payload = {
+                api_key: document.getElementById('txtSetApiKey').value.trim(),
+                model: document.getElementById('cboSetModel').value,
+                mode: document.getElementById('cboSetAiMode').value,
+                channel: chEl ? chEl.value : 'chrome',
+                require_doc_date: document.getElementById('chkSetRequireDate').checked,
+                base_dir: document.getElementById('txtSingleOutDir').value.trim()
+            };
+            const res = await callAgentApi('/api/settings/save', 'POST', payload);
+            if (res.ok) {
+                window.toast.fire({ icon: 'success', title: 'Đã lưu và áp dụng cấu hình!' });
+            }
+        };
+
+        window.syncDocTypesFromWeb = async function() {
+            if (!ensureAgentConnected()) return;
+            await callAgentApi('/api/settings/sync-doctypes', 'POST');
+            window.toast.fire({ icon: 'info', title: 'Đang quét danh mục Loại văn bản từ QLVB...' });
+        };
+
+        // LOG VIEWER MODAL
+        window.openLogModal = function() {
+            document.getElementById('logViewerModal').classList.remove('hidden');
+            document.getElementById('logViewerModal').classList.add('flex');
+            window.renderLogTerminal();
+        };
+
+        window.closeLogModal = function() {
+            document.getElementById('logViewerModal').classList.add('hidden');
+            document.getElementById('logViewerModal').classList.remove('flex');
+        };
+
+        window.renderLogTerminal = function() {
+            const area = document.getElementById('logTerminalArea');
+            if (!area) return;
+            const kw = (document.getElementById('txtLogFilter')?.value || '').trim().toLowerCase();
+            const filtered = logHistory.filter(l => !kw || l.msg.toLowerCase().includes(kw) || l.ts.includes(kw));
+            document.getElementById('lblPopupLogCount').innerText = `Hiển thị: ${filtered.length}/${logHistory.length} dòng`;
+
+            const colorMap = {
+                info: 'text-sky-400',
+                success: 'text-emerald-400',
+                warning: 'text-amber-300',
+                error: 'text-red-400 font-bold',
+                header: 'text-purple-400 font-bold'
+            };
+
+            area.innerHTML = filtered.map(l => `
+                <div>
+                    <span class="text-slate-500">[${escapeHtml(l.ts)}]</span>
+                    <span class="${colorMap[l.tag] || 'text-slate-200'}">${escapeHtml(l.msg)}</span>
+                </div>
+            `).join('');
+
+            if (document.getElementById('chkLogAutoScroll')?.checked) {
+                area.scrollTop = area.scrollHeight;
+            }
+        };
+
+        window.copyAllLogs = function() {
+            const txt = logHistory.map(l => `[${l.ts}] ${l.msg}`).join('\n');
+            navigator.clipboard.writeText(txt).then(() => {
+                window.toast.fire({ icon: 'success', title: 'Đã sao chép toàn bộ nhật ký!' });
+            });
+        };
+
+        window.exportLogsTxt = function() {
+            const txt = logHistory.map(l => `[${l.ts}] ${l.msg}`).join('\n');
+            const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qlvb_log_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        window.clearAllLogs = async function() {
+            logHistory = [];
+            window.renderLogTerminal();
+            if (agentOnline) await callAgentApi('/api/logs/clear', 'POST');
+        };
+
+        // KHỞI ĐỘNG ỨNG DỤNG
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (localStorage.getItem('qlvb_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('darkModeIcon').className = 'fas fa-sun text-xs text-yellow-300';
+            }
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    window.closeLogModal();
+                    window.closeAdminAccountsModal();
+                }
+            });
+
+            if (supabaseClient) {
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session && session.user) {
+                        setLoader(true, 'Đang kiểm tra trạng thái phê duyệt tài khoản...');
+                        await window.completeAuthenticatedSession(session.user);
+                    }
+                } catch (err) {
+                    showLoginError(err.message);
+                } finally {
+                    setLoader(false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

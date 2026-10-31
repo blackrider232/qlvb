@@ -1,0 +1,24 @@
+{
+  "name": "Hệ thống Quản lý & Tải Văn bản Điều hành Hà Nội (QLVB - SCE)",
+  "short_name": "QLVB SCE",
+  "description": "Phần mềm tra cứu, tải tự động và quản lý hồ sơ văn bản điều hành thành phố Hà Nội - Trung tâm Xúc tiến đầu tư và Hỗ trợ doanh nghiệp Hà Nội (SCE)",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
