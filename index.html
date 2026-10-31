@@ -170,58 +170,119 @@
                     </div>
                 </div>
 
-                <!-- GÓC PHẢI: CÁC NÚT CHỨC NĂNG SẮP XẾP THÀNH 2 DÒNG -->
-                <div class="flex flex-col gap-1.5 items-stretch lg:items-end shrink-0 w-full lg:w-auto">
-                    <!-- DÒNG 1: QLVB + CHẾ ĐỘ SÁNG/TỐI + TÀI KHOẢN & ĐĂNG XUẤT -->
-                    <div class="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
-                        <!-- 1. Nút Mở / Ẩn Hiện Trình duyệt QLVB -->
-                        <button onclick="window.triggerOpenBrowser()" id="btnTopBrowser" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5 shrink-0" title="Mở hoặc Ẩn/Hiện trình duyệt QLVB">
-                            <i class="fas fa-globe"></i>
-                            <span id="txtTopBrowser">Mở QLVB</span>
+                <!-- GÓC PHẢI: NÚT CÔNG CỤ CHÍNH (BUNG RA KHI CLICK) + TÀI KHOẢN + ĐĂNG XUẤT (CHUẨN /QUANLYDAUTHAU) -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <!-- NÚT CÔNG CỤ CHÍNH (CLICK VÀO BUNG RA MENU) -->
+                    <div class="relative" id="mainToolsDropdownWrapper">
+                        <button type="button" onclick="window.toggleMainToolsMenu(event)" id="btnMainToolsMenu" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold transition flex items-center gap-2 shadow-sm backdrop-blur-md cursor-pointer" title="Menu các công cụ chính của hệ thống">
+                            <i class="fas fa-toolbox text-amber-400 text-xs"></i>
+                            <span>Công cụ</span>
+                            <!-- Đèn báo trạng thái tổng hợp mini -->
+                            <span class="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/25 text-[10px]">
+                                <span id="dotSummaryLocal" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="Trạng thái Local Agent"></span>
+                                <span id="dotSummaryAi" class="w-2 h-2 rounded-full bg-slate-400" title="Trạng thái Gemini AI"></span>
+                            </span>
+                            <span id="badgePendingToolsSummary" class="hidden px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-extrabold">0</span>
+                            <i id="iconChevronTools" class="fas fa-chevron-down text-[10px] text-blue-200 transition-transform duration-200"></i>
                         </button>
 
-                        <!-- 2. Nút Chuyển Sáng / Tối -->
-                        <button onclick="window.toggleDarkMode()" class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/10 hover:bg-white/20 text-yellow-300 border border-white/15 transition shrink-0" title="Chế độ Sáng / Tối">
-                            <i id="darkModeIcon" class="fas fa-moon text-xs"></i>
-                        </button>
+                        <!-- MENU BUNG RA (DROPDOWN TOÀN BỘ CÔNG CỤ CHÍNH) -->
+                        <div id="mainToolsMenu" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2.5 z-50 text-xs">
+                            <div class="px-4 py-1.5 border-b border-slate-100 dark:border-slate-700/80 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5 text-blue-900 dark:text-blue-300">
+                                    <i class="fas fa-toolbox text-amber-500"></i> Bảng công cụ chính
+                                </span>
+                                <span class="text-[9px] font-mono text-slate-400">SCE QLVB v2.0</span>
+                            </div>
 
-                        <!-- 3. Thông tin người dùng & Đăng xuất -->
-                        <div class="flex items-center gap-1.5 pl-1 border-l border-white/20 shrink-0">
-                            <button onclick="window.openProfileModal()" id="userBadge" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-lg text-xs font-semibold text-white transition flex items-center gap-1.5" title="Thông tin tài khoản & Đổi mật khẩu">
-                                <i class="fas fa-user-circle"></i>
-                                <span id="lblUserName">Cán bộ SCE</span>
-                            </button>
-                            <button onclick="window.handleLogout()" class="w-7 h-7 rounded-lg bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center shadow transition" title="Đăng xuất">
-                                <i class="fas fa-power-off text-xs"></i>
-                            </button>
+                            <div class="p-1.5 space-y-1">
+                                <!-- 1. Mở / Ẩn Trình duyệt QLVB -->
+                                <button type="button" onclick="window.triggerOpenBrowser(); window.closeMainToolsMenu();" id="btnTopBrowser" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-globe text-blue-600 dark:text-blue-400 w-4 text-center"></i>
+                                        <span>Trình duyệt QLVB</span>
+                                    </div>
+                                    <span id="txtTopBrowser" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold">Mở QLVB</span>
+                                </button>
+
+                                <!-- 2. Trạng thái & Cài đặt Gemini AI -->
+                                <button type="button" onclick="window.openAiConfigModal(); window.closeMainToolsMenu();" id="badgeTopAi" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-robot text-purple-600 dark:text-purple-400 w-4 text-center"></i>
+                                        <span>Trí tuệ nhân tạo (Gemini AI)</span>
+                                    </div>
+                                    <span id="txtTopAi" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 font-bold">⚪ Chưa kết nối</span>
+                                </button>
+
+                                <!-- 3. Trạng thái Máy trạm Local Agent -->
+                                <button type="button" onclick="window.openAgentHelpModal(); window.closeMainToolsMenu();" id="badgeLocalAgent" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-desktop text-emerald-600 dark:text-emerald-400 w-4 text-center"></i>
+                                        <span>Máy trạm Local (Cổng 8765)</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span id="dotLocalAgent" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                        <span id="txtLocalAgent" class="text-[10px] font-bold text-amber-600 dark:text-amber-400">Đang kiểm tra</span>
+                                    </div>
+                                </button>
+
+                                <!-- 4. Bảng Nhật Ký (Log Terminal Viewer) -->
+                                <button type="button" onclick="window.openLogModal(); window.closeMainToolsMenu();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-terminal text-emerald-500 w-4 text-center"></i>
+                                        <span>Nhật ký hệ thống (Log)</span>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-slate-900 text-emerald-400 text-[10px] font-mono font-bold">
+                                        <span id="badgeLogCount">0</span> dòng
+                                    </span>
+                                </button>
+
+                                <!-- 5. Nút Duyệt TK dành cho Admin -->
+                                <button type="button" onclick="window.openAdminAccountsModal(); window.closeMainToolsMenu();" id="btnAdminApproval" class="hidden w-full items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-user-shield text-amber-500 w-4 text-center"></i>
+                                        <span>Phê duyệt tài khoản truy cập</span>
+                                    </div>
+                                    <span id="badgePendingUsers" class="hidden px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-extrabold">0</span>
+                                </button>
+
+                                <!-- 6. Mở thư mục tải về -->
+                                <button type="button" onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'folder'); window.closeMainToolsMenu();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-folder-open text-amber-600 w-4 text-center"></i>
+                                        <span>Mở thư mục tải trên máy</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400">Local ↗</span>
+                                </button>
+
+                                <!-- 7. Xem file Excel tổng hợp -->
+                                <button type="button" onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'report'); window.closeMainToolsMenu();" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-700/70 transition font-semibold">
+                                    <div class="flex items-center gap-2.5">
+                                        <i class="fas fa-file-excel text-emerald-600 w-4 text-center"></i>
+                                        <span>Xem file Excel tổng hợp</span>
+                                    </div>
+                                    <span class="text-[10px] text-emerald-600 font-bold">.XLSX ↗</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-1 pt-2 border-t border-slate-100 dark:border-slate-700/80 px-3 flex items-center justify-between text-slate-600 dark:text-slate-300">
+                                <span class="text-[11px] font-medium">Giao diện Sáng / Tối:</span>
+                                <button type="button" onclick="window.toggleDarkMode()" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                                    <i id="darkModeIcon" class="fas fa-moon text-amber-400 text-xs"></i>
+                                    <span id="lblDarkModeText">Chuyển nền</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- DÒNG 2: DUYỆT TK (TRÁI CÙNG, CHỈ ADMIN HIỆN) + TRẠNG THÁI AI + TRẠNG THÁI LOCAL + LOG -->
-                    <div class="flex items-center justify-end gap-1.5 w-full flex-wrap sm:flex-nowrap">
-                        <!-- 4. Nút Quản lý & Duyệt Tài khoản (CHỈ HIỆN VỚI ADMIN - bên trái cùng dòng dưới) -->
-                        <button onclick="window.openAdminAccountsModal()" id="btnAdminApproval" class="hidden mr-auto px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm transition items-center gap-1.5 shrink-0" title="Duyệt tài khoản đăng ký mới">
-                            <i class="fas fa-user-check"></i>
-                            <span>Duyệt TK</span>
-                            <span id="badgePendingUsers" class="hidden px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[10px] font-extrabold">0</span>
+                    <!-- THÔNG TIN TÀI KHOẢN & ĐĂNG XUẤT -->
+                    <div class="flex items-center gap-1.5 pl-1.5 border-l border-white/20">
+                        <button type="button" onclick="window.openProfileModal()" id="userBadge" class="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm backdrop-blur-md" title="Thông tin tài khoản & Đổi mật khẩu">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="lblUserName">Cán bộ SCE</span>
                         </button>
-
-                        <!-- 5. Trạng thái Kết nối AI (nằm cùng hàng ngay cạnh nút Local, bấm để nhập API Key) -->
-                        <button onclick="window.openAiConfigModal()" id="badgeTopAi" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700/80 hover:bg-slate-600 text-slate-200 border border-slate-500/40 transition flex items-center gap-1.5 shrink-0" title="Bấm để nhập API Key và cài đặt kết nối Gemini AI">
-                            <span id="txtTopAi">⚪ AI: Chưa kết nối</span>
-                        </button>
-
-                        <!-- 6. Trạng thái kết nối Máy trạm Local (rút ngắn gọn, nằm ngay cạnh nút AI và nút Log) -->
-                        <button onclick="window.openAgentHelpModal()" id="badgeLocalAgent" class="px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-amber-500/20 text-amber-200 border border-amber-400/40 hover:bg-amber-500/30 transition shrink-0" title="Trạng thái kết nối Local Agent trên máy tính">
-                            <span id="dotLocalAgent" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                            <span id="txtLocalAgent">Local: Đang kiểm tra</span>
-                        </button>
-
-                        <!-- 7. Nút mở Bảng Nhật Ký (chỉ hiện chữ Log) -->
-                        <button onclick="window.openLogModal()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700/80 hover:bg-slate-600 text-white border border-slate-500/40 transition flex items-center gap-1.5 shrink-0" title="Xem nhật ký chi tiết hệ thống">
-                            <i class="fas fa-terminal text-emerald-400"></i>
-                            <span>Log</span>
-                            <span id="badgeLogCount" class="px-1.5 py-0.2 bg-slate-900 rounded text-[10px] text-emerald-300">0</span>
+                        <button type="button" onclick="window.handleLogout()" class="w-8 h-8 rounded-xl bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center shadow transition" title="Đăng xuất">
+                            <i class="fas fa-power-off text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -273,109 +334,114 @@
             <!-- TAB 1: TRA CỨU NHANH & TẢI ĐƠN LẺ                                 -->
             <!-- ================================================================= -->
             <section id="tabPage_single" class="space-y-3.5 flex-1">
-                <!-- Khối 1: Nội dung / Trích yếu & Tìm kiếm nâng cao -->
-                <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="text-xs sm:text-sm font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
-                            🔍 Nội dung / Trích yếu cần tra cứu trên hệ thống QLVB:
-                        </label>
-                        <span id="lblAdvStatus" class="text-xs font-medium text-slate-400">Bộ lọc nâng cao: Đang tắt</span>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="txtSingleKeyword" class="flex-1 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3.5 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" placeholder="Nhập từ khóa trích yếu văn bản (VD: chấp thuận chủ trương đầu tư, Tây Hồ Tây...)" onkeypress="if(event.key==='Enter') window.triggerSingleCheckCount()">
-                        <div class="flex gap-2 shrink-0">
-                            <button onclick="window.toggleSingleAdv()" id="btnToggleSingleAdv" class="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
-                                ⚙️ Tìm kiếm nâng cao ▾
-                            </button>
-                            <button onclick="window.clearSingleSearch()" class="px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/30 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 border border-slate-300 dark:border-slate-600 transition">
-                                ✖ Xóa
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Khung tìm kiếm nâng cao -->
-                    <div id="boxSingleAdv" class="hidden mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Số ký hiệu văn bản:</label>
-                            <input type="text" id="txtSingleNumber" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 123/QĐ-UBND">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Cơ quan ban hành:</label>
-                            <input type="text" id="txtSingleAgency" list="agencyList" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Chọn hoặc nhập tên cơ quan...">
-                            <datalist id="agencyList">
-                                <option value="Sở Xây dựng"></option>
-                                <option value="Sở Tài chính"></option>
-                                <option value="UBND thành phố Hà Nội"></option>
-                                <option value="Văn phòng UBND thành phố Hà Nội"></option>
-                                <option value="Sở Quy hoạch - Kiến trúc"></option>
-                                <option value="Sở Kế hoạch và Đầu tư"></option>
-                                <option value="Sở Tài nguyên và Môi trường"></option>
-                                <option value="Sở Giao thông vận tải"></option>
-                                <option value="Sở Nông nghiệp và Môi trường"></option>
-                                <option value="Sở Công Thương"></option>
-                                <option value="Sở Thông tin và Truyền thông"></option>
-                                <option value="Sở Giáo dục và Đào tạo"></option>
-                                <option value="Sở Y tế"></option>
-                                <option value="Sở Tư pháp"></option>
-                                <option value="Sở Khoa học và Công nghệ"></option>
-                                <option value="Cục Thuế thành phố Hà Nội"></option>
-                                <option value="Hội đồng nhân dân thành phố Hà Nội"></option>
-                            </datalist>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Từ ngày (dd/mm/yyyy):</label>
-                            <input type="text" id="txtSingleFrom" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 01/01/2026">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Đến ngày (dd/mm/yyyy):</label>
-                            <input type="text" id="txtSingleTo" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 31/12/2026">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Khối 2: Thư mục lưu Local & Định dạng đặt tên file -->
+                <!-- KHỐI GỘP: TÌM KIẾM & THƯ MỤC LƯU TRỮ (2 HÀNG CÙNG NHAU THEO CHUẨN /QUANLYDAUTHAU) -->
                 <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-                    <h3 class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-tight">
-                        📁 Thư mục lưu trên máy tính (Local) & Tùy biến định dạng file tải
-                    </h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Thư mục lưu file:</label>
-                        <div class="lg:col-span-7 flex gap-2">
-                            <input type="text" id="txtSingleOutDir" class="flex-1 border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="C:\Users\...\downloads">
+                    <!-- HÀNG 1: Ô TÌM KIẾM NỘI DUNG / TRÍCH YẾU -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <i class="fas fa-search text-blue-600 dark:text-blue-400"></i>
+                            <span class="whitespace-nowrap">Nội dung / Trích yếu:</span>
+                        </label>
+                        <div class="lg:col-span-7">
+                            <input type="text" id="txtSingleKeyword" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Nhập từ khóa trích yếu văn bản (VD: chấp thuận chủ trương đầu tư, Tây Hồ Tây...)" onkeypress="if(event.key==='Enter') window.triggerSingleCheckCount()">
                         </div>
-                        <div class="lg:col-span-3 flex gap-2">
-                            <button onclick="window.chooseLocalFolder('txtSingleOutDir')" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                        <div class="lg:col-span-3 flex gap-1.5">
+                            <button type="button" onclick="window.toggleSingleAdv()" id="btnToggleSingleAdv" class="flex-1 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm" title="Mở rộng tùy chọn tìm kiếm nâng cao & định dạng file">
+                                <i class="fas fa-sliders text-xs"></i>
+                                <span>Tùy chọn nâng cao</span>
+                                <span id="advSingleDot" class="hidden w-2 h-2 rounded-full bg-amber-500"></span>
+                                <i id="advSingleChevron" class="fas fa-chevron-down text-[10px] ml-0.5 transition-transform duration-200"></i>
+                            </button>
+                            <button type="button" onclick="window.clearSingleSearch()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-red-50 dark:hover:bg-red-900/40 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-red-600 border border-slate-300 dark:border-slate-600 transition" title="Xóa từ khóa tìm kiếm">
+                                ✖
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- HÀNG 2: THƯ MỤC LƯU TRỮ TRÊN MÁY TÍNH -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 items-center">
+                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <i class="fas fa-folder text-amber-500"></i>
+                            <span class="whitespace-nowrap">Thư mục lưu trữ:</span>
+                        </label>
+                        <div class="lg:col-span-7">
+                            <input type="text" id="txtSingleOutDir" class="w-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="C:\Users\...\downloads">
+                        </div>
+                        <div class="lg:col-span-3 flex gap-1.5">
+                            <button type="button" onclick="window.chooseLocalFolder('txtSingleOutDir')" class="flex-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition whitespace-nowrap shadow-sm">
                                 📂 Chọn thư mục...
                             </button>
-                            <button onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'folder')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition">
+                            <button type="button" onclick="window.openLocalPath(document.getElementById('txtSingleOutDir').value, 'folder')" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition shadow-sm" title="Mở thư mục trên máy tính">
                                 📁 Mở
                             </button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                        <label class="lg:col-span-2 text-xs font-bold text-slate-700 dark:text-slate-300">Định dạng tên file:</label>
-                        <div class="lg:col-span-5">
-                            <select id="cboSingleNaming" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
-                                <option value="[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}">[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}</option>
-                                <option value="[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}">[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}</option>
-                                <option value="[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}">[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}</option>
-                                <option value="[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}">[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}</option>
-                                <option value="[Nguyên bản] {ten_goc}">[Nguyên bản] {ten_goc}</option>
-                            </select>
+                    <!-- KHUNG TÙY CHỌN NÂNG CAO (MẶC ĐỊNH ẨN, BẤM NÚT NÂNG CAO MỚI BUNG RA) -->
+                    <div id="boxSingleAdv" class="hidden pt-3 border-t border-dashed border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-extrabold uppercase tracking-tight text-blue-900 dark:text-blue-300">
+                                ⚙️ Bộ lọc tìm kiếm chi tiết & Cấu hình tệp
+                            </span>
+                            <span id="lblAdvStatus" class="text-xs font-medium text-slate-400">Bộ lọc nâng cao: Đang tắt</span>
                         </div>
-                        <div class="lg:col-span-5 text-[11px] text-slate-500 dark:text-slate-400">
-                            💡 Biến hỗ trợ: <code>{ngay}</code>, <code>{so_kh}</code>, <code>{loai_vb}</code>, <code>{co_quan}</code>, <code>{tom_tat}</code>, <code>{trich_yeu}</code>, <code>{ten_goc}</code>
-                        </div>
-                    </div>
 
-                    <div class="pt-1 flex flex-wrap items-center gap-2">
-                        <label class="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            <input type="checkbox" id="chkSingleUseAi" checked class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                            <span>✨ Sử dụng Trí tuệ Nhân tạo (Gemini AI) để tóm tắt cốt lõi vào tên file</span>
-                        </label>
-                        <span class="text-[11px] italic text-slate-500 dark:text-slate-400">(Bỏ chọn để tải nhanh bằng bộ quy tắc rút gọn tiếng Việt offline)</span>
+                        <!-- 4 ô lọc tìm kiếm -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50/80 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Số ký hiệu văn bản:</label>
+                                <input type="text" id="txtSingleNumber" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 123/QĐ-UBND">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Cơ quan ban hành:</label>
+                                <input type="text" id="txtSingleAgency" list="agencyList" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="Chọn hoặc nhập tên...">
+                                <datalist id="agencyList">
+                                    <option value="Sở Xây dựng"></option>
+                                    <option value="Sở Tài chính"></option>
+                                    <option value="UBND thành phố Hà Nội"></option>
+                                    <option value="Văn phòng UBND thành phố Hà Nội"></option>
+                                    <option value="Sở Quy hoạch - Kiến trúc"></option>
+                                    <option value="Sở Kế hoạch và Đầu tư"></option>
+                                    <option value="Sở Tài nguyên và Môi trường"></option>
+                                    <option value="Sở Giao thông vận tải"></option>
+                                    <option value="Sở Nông nghiệp và Môi trường"></option>
+                                    <option value="Sở Công Thương"></option>
+                                    <option value="Sở Thông tin và Truyền thông"></option>
+                                    <option value="Sở Giáo dục và Đào tạo"></option>
+                                    <option value="Sở Y tế"></option>
+                                    <option value="Sở Tư pháp"></option>
+                                    <option value="Sở Khoa học và Công nghệ"></option>
+                                    <option value="Cục Thuế thành phố Hà Nội"></option>
+                                    <option value="Hội đồng nhân dân thành phố Hà Nội"></option>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Từ ngày (dd/mm/yyyy):</label>
+                                <input type="text" id="txtSingleFrom" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 01/01/2026">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Đến ngày (dd/mm/yyyy):</label>
+                                <input type="text" id="txtSingleTo" oninput="window.updateSingleAdvBadge()" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" placeholder="VD: 31/12/2026">
+                            </div>
+                        </div>
+
+                        <!-- Tùy biến định dạng tên file & Checkbox AI -->
+                        <div class="bg-slate-50/80 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-2 flex-1">
+                                <label class="font-bold text-slate-700 dark:text-slate-300 shrink-0">Định dạng file:</label>
+                                <select id="cboSingleNaming" class="flex-1 max-w-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg px-2.5 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                                    <option value="[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}">[Mặc định] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{tom_tat}</option>
+                                    <option value="[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}">[Gọn gàng] {ngay}_{loai_vb}_{so_kh}_{tom_tat}</option>
+                                    <option value="[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}">[Trích yếu gốc] {ngay}_{loai_vb}_{so_kh}_{co_quan}_{trich_yeu}</option>
+                                    <option value="[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}">[Số hiệu + Tóm tắt] {so_kh}_{tom_tat}</option>
+                                    <option value="[Nguyên bản] {ten_goc}">[Nguyên bản] {ten_goc}</option>
+                                </select>
+                            </div>
+                            <label class="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700 dark:text-slate-200">
+                                <input type="checkbox" id="chkSingleUseAi" checked class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                                <span>✨ Sử dụng Gemini AI tóm tắt tên file</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -1056,14 +1122,46 @@
         window.toggleDarkMode = function() {
             document.documentElement.classList.toggle('dark');
             const icon = document.getElementById('darkModeIcon');
+            const lbl = document.getElementById('lblDarkModeText');
             if (document.documentElement.classList.contains('dark')) {
-                icon.className = 'fas fa-sun text-xs text-yellow-300';
+                if (icon) icon.className = 'fas fa-sun text-xs text-amber-400';
+                if (lbl) lbl.innerText = 'Chuyển sáng';
                 localStorage.setItem('qlvb_theme', 'dark');
             } else {
-                icon.className = 'fas fa-moon text-xs text-yellow-300';
+                if (icon) icon.className = 'fas fa-moon text-xs text-amber-400';
+                if (lbl) lbl.innerText = 'Chuyển tối';
                 localStorage.setItem('qlvb_theme', 'light');
             }
         };
+
+        window.toggleMainToolsMenu = function(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('mainToolsMenu');
+            const chevron = document.getElementById('iconChevronTools');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                if (chevron) chevron.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if (chevron) chevron.classList.remove('rotate-180');
+            }
+        };
+
+        window.closeMainToolsMenu = function() {
+            const menu = document.getElementById('mainToolsMenu');
+            const chevron = document.getElementById('iconChevronTools');
+            if (menu) menu.classList.add('hidden');
+            if (chevron) chevron.classList.remove('rotate-180');
+        };
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('mainToolsDropdownWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                window.closeMainToolsMenu();
+            }
+        });
 
         // =====================================================================
         // 1. XÁC THỰC SUPABASE & ĐỒNG BỘ BẢNG ĐỘC LẬP `qlvb_profiles`
@@ -1155,11 +1253,11 @@
             const btnAdmin = document.getElementById('btnAdminApproval');
             if (currentUser.is_admin) {
                 btnAdmin.classList.remove('hidden');
-                btnAdmin.classList.add('inline-flex');
+                btnAdmin.classList.add('flex');
                 window.fetchAllProfilesForAdmin(true);
             } else {
                 btnAdmin.classList.add('hidden');
-                btnAdmin.classList.remove('inline-flex');
+                btnAdmin.classList.remove('flex');
             }
 
             document.getElementById('loginScreen').classList.add('hidden');
@@ -1393,11 +1491,19 @@
                 allQlvbProfiles = data || [];
                 const pendingCnt = allQlvbProfiles.filter(u => !u.is_approved).length;
                 const badge = document.getElementById('badgePendingUsers');
+                const badgeTools = document.getElementById('badgePendingToolsSummary');
                 if (pendingCnt > 0) {
-                    badge.innerText = pendingCnt;
-                    badge.classList.remove('hidden');
+                    if (badge) {
+                        badge.innerText = pendingCnt;
+                        badge.classList.remove('hidden');
+                    }
+                    if (badgeTools) {
+                        badgeTools.innerText = pendingCnt;
+                        badgeTools.classList.remove('hidden');
+                    }
                 } else {
-                    badge.classList.add('hidden');
+                    if (badge) badge.classList.add('hidden');
+                    if (badgeTools) badgeTools.classList.add('hidden');
                 }
                 window.renderAdminUsersTable();
             } catch (e) {
@@ -1648,16 +1754,20 @@
         window.updateAiBadgeFromLocal = function() {
             const badgeAi = document.getElementById('badgeTopAi');
             const txtAi = document.getElementById('txtTopAi');
+            const dotSummaryAi = document.getElementById('dotSummaryAi');
             if (!badgeAi || !txtAi) return;
             if (localAiConfig.mode === 'off') {
-                badgeAi.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700/80 hover:bg-slate-600 text-slate-300 border border-slate-500/40 transition flex items-center gap-1.5 shrink-0';
-                txtAi.innerText = '⚪ AI: Đang tắt';
+                txtAi.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 font-bold';
+                txtAi.innerText = '⚪ Đang tắt';
+                if (dotSummaryAi) dotSummaryAi.className = 'w-2 h-2 rounded-full bg-slate-400';
             } else if (localAiConfig.api_key && localAiConfig.verified) {
-                badgeAi.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 transition flex items-center gap-1.5 shrink-0';
-                txtAi.innerText = '🤖 AI: Đã kết nối';
+                txtAi.className = 'text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold';
+                txtAi.innerText = '🤖 Đã kết nối';
+                if (dotSummaryAi) dotSummaryAi.className = 'w-2 h-2 rounded-full bg-purple-400';
             } else {
-                badgeAi.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-700/80 hover:bg-slate-600 text-slate-200 border border-slate-500/40 transition flex items-center gap-1.5 shrink-0';
-                txtAi.innerText = '⚪ AI: Chưa kết nối';
+                txtAi.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 font-bold';
+                txtAi.innerText = '⚪ Chưa kết nối';
+                if (dotSummaryAi) dotSummaryAi.className = 'w-2 h-2 rounded-full bg-slate-400';
             }
         };
 
@@ -1782,12 +1892,16 @@
                 agentOnline = true;
                 document.getElementById('bannerAgentOffline').classList.add('hidden');
 
-                const badgeAgent = document.getElementById('badgeLocalAgent');
+                const dotSummaryLocal = document.getElementById('dotSummaryLocal');
+                if (dotSummaryLocal) dotSummaryLocal.className = 'w-2 h-2 rounded-full bg-emerald-400';
+
                 const dotAgent = document.getElementById('dotLocalAgent');
                 const txtAgent = document.getElementById('txtLocalAgent');
-                badgeAgent.className = 'px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 hover:bg-emerald-500/30 transition shrink-0';
-                dotAgent.className = 'w-2 h-2 rounded-full bg-emerald-400';
-                txtAgent.innerText = 'Local: Đã kết nối';
+                if (dotAgent) dotAgent.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                if (txtAgent) {
+                    txtAgent.className = 'text-[10px] font-bold text-emerald-600 dark:text-emerald-400';
+                    txtAgent.innerText = 'Đã kết nối';
+                }
 
                 // Đồng bộ thư mục lưu trữ lần đầu
                 if (!settingsLoadedOnce && data.settings) {
@@ -1826,19 +1940,20 @@
                     gTxt.innerText = '🟢 Đã kết nối thành công với QLVB_Web_Agent.exe trên máy tính này! Bạn có thể tra cứu và tải văn bản ngay.';
                 }
 
-                // Cập nhật trạng thái trình duyệt QLVB (bỏ chữ Chạy ngầm Hiện/Ẩn)
+                // Cập nhật trạng thái trình duyệt QLVB
                 const br = data.browser || {};
-                const btnBr = document.getElementById('btnTopBrowser');
                 const txtBr = document.getElementById('txtTopBrowser');
-                if (!br.started) {
-                    btnBr.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5 shrink-0';
-                    txtBr.innerText = 'Mở QLVB';
-                } else if (br.is_hidden) {
-                    btnBr.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition flex items-center gap-1.5 shrink-0';
-                    txtBr.innerText = '🔒 QLVB';
-                } else {
-                    btnBr.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition flex items-center gap-1.5 shrink-0';
-                    txtBr.innerText = '👁️ QLVB';
+                if (txtBr) {
+                    if (!br.started) {
+                        txtBr.innerText = 'Mở QLVB';
+                        txtBr.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold';
+                    } else if (br.is_hidden) {
+                        txtBr.innerText = '🔒 Đang ngầm';
+                        txtBr.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold';
+                    } else {
+                        txtBr.innerText = '👁️ Đang hiện';
+                        txtBr.className = 'text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold';
+                    }
                 }
 
                 // Cập nhật trạng thái và tiến trình dưới đáy
@@ -1862,12 +1977,17 @@
             } catch (e) {
                 agentOnline = false;
                 document.getElementById('bannerAgentOffline').classList.remove('hidden');
-                const badgeAgent = document.getElementById('badgeLocalAgent');
+
+                const dotSummaryLocal = document.getElementById('dotSummaryLocal');
+                if (dotSummaryLocal) dotSummaryLocal.className = 'w-2 h-2 rounded-full bg-red-400 animate-pulse';
+
                 const dotAgent = document.getElementById('dotLocalAgent');
                 const txtAgent = document.getElementById('txtLocalAgent');
-                badgeAgent.className = 'px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-red-500/20 text-red-200 border border-red-400/40 hover:bg-red-500/30 transition shrink-0';
-                dotAgent.className = 'w-2 h-2 rounded-full bg-red-400 animate-ping';
-                txtAgent.innerText = 'Local: Chưa bật';
+                if (dotAgent) dotAgent.className = 'w-2 h-2 rounded-full bg-red-400 animate-ping';
+                if (txtAgent) {
+                    txtAgent.className = 'text-[10px] font-bold text-red-600 dark:text-red-400';
+                    txtAgent.innerText = 'Chưa bật';
+                }
 
                 window.updateAiBadgeFromLocal();
 
@@ -1947,31 +2067,43 @@
 
         window.toggleSingleAdv = function() {
             const box = document.getElementById('boxSingleAdv');
+            const chevron = document.getElementById('advSingleChevron');
             const btn = document.getElementById('btnToggleSingleAdv');
-            if (box.classList.contains('hidden')) {
+            if (!box) return;
+            const isHidden = box.classList.contains('hidden');
+            if (isHidden) {
                 box.classList.remove('hidden');
-                btn.innerText = '⚙️ Thu gọn nâng cao ▴';
+                if (chevron) chevron.classList.add('rotate-180');
+                if (btn) btn.classList.add('ring-2', 'ring-blue-500/30');
             } else {
                 box.classList.add('hidden');
-                btn.innerText = '⚙️ Tìm kiếm nâng cao ▾';
+                if (chevron) chevron.classList.remove('rotate-180');
+                if (btn) btn.classList.remove('ring-2', 'ring-blue-500/30');
             }
             window.updateSingleAdvBadge();
         };
 
         window.updateSingleAdvBadge = function() {
             const has = Boolean(
-                document.getElementById('txtSingleNumber').value.trim() ||
-                document.getElementById('txtSingleAgency').value.trim() ||
-                document.getElementById('txtSingleFrom').value.trim() ||
-                document.getElementById('txtSingleTo').value.trim()
+                (document.getElementById('txtSingleNumber')?.value || '').trim() ||
+                (document.getElementById('txtSingleAgency')?.value || '').trim() ||
+                (document.getElementById('txtSingleFrom')?.value || '').trim() ||
+                (document.getElementById('txtSingleTo')?.value || '').trim()
             );
+            const dot = document.getElementById('advSingleDot');
+            if (dot) {
+                if (has) dot.classList.remove('hidden');
+                else dot.classList.add('hidden');
+            }
             const lbl = document.getElementById('lblAdvStatus');
-            if (has) {
-                lbl.innerText = '● Bộ lọc nâng cao: ĐANG ÁP DỤNG';
-                lbl.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400';
-            } else {
-                lbl.innerText = 'Bộ lọc nâng cao: Trống';
-                lbl.className = 'text-xs font-medium text-slate-400';
+            if (lbl) {
+                if (has) {
+                    lbl.innerText = '● Bộ lọc nâng cao: ĐANG ÁP DỤNG';
+                    lbl.className = 'text-xs font-bold text-emerald-600 dark:text-emerald-400';
+                } else {
+                    lbl.innerText = 'Bộ lọc nâng cao: Đang tắt';
+                    lbl.className = 'text-xs font-medium text-slate-400';
+                }
             }
         };
 
